@@ -1,2 +1,2 @@
-# GPPA-PROCUREMENT-AUDIT-SYSTEM
+# GPPA Procurement Audit System
 AI-powered procurement compliance and audit system based on GPPA regulations, designed to detect risks, enforce compliance, and improve transparency in public procurement.
