@@ -1,12 +1,14 @@
 import streamlit as st
 import pandas as pd
+import joblib
+import io
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from imblearn.over_sampling import SMOTE
 
 st.set_page_config(
     page_title="GPPA Procurement Compliance & ML Risk System",
@@ -15,8 +17,8 @@ st.set_page_config(
 
 st.title("🤖 AI/ML-Powered GPPA Procurement Risk Detection System")
 st.write(
-    "Upload procurement data to detect compliance issues, calculate AI risk scores, "
-    "and train a real Machine Learning model to predict procurement risk."
+    "A two-section system: one section for GPPA compliance audit reporting, "
+    "and another section for ML model training, testing, and recruiter-facing technical evaluation."
 )
 
 uploaded_file = st.file_uploader(
@@ -186,174 +188,305 @@ if uploaded_file:
     final_df = pd.concat([df, results_df], axis=1)
     final_df = final_df.loc[:, ~final_df.columns.duplicated()]
 
-    st.subheader("📌 Dashboard Summary")
+    tab1, tab2 = st.tabs([
+        "📋 Compliance Audit Report",
+        "🤖 Machine Learning Model"
+    ])
 
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Total Procurements", len(final_df))
-    col2.metric("Average Compliance Score", f"{final_df['compliance_score'].mean():.2f}%")
-    col3.metric("Average AI Risk Score", f"{final_df['AI Risk Score'].mean():.2f}")
-    col4.metric("High Risk Cases", (final_df["AI Risk Category"] == "High").sum())
+    with tab1:
+        st.subheader("📋 GPPA Compliance Audit Report")
+        st.write(
+            "This section is designed for GPPA directors, auditors, and public-sector decision makers. "
+            "It focuses on compliance status, risk flags, and downloadable audit reporting."
+        )
 
-    st.divider()
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("Total Procurements", len(final_df))
+        col2.metric("Average Compliance Score", f"{final_df['compliance_score'].mean():.2f}%")
+        col3.metric("Average Risk Score", f"{final_df['AI Risk Score'].mean():.2f}")
+        col4.metric("High Risk Cases", (final_df["AI Risk Category"] == "High").sum())
 
-    st.subheader("🤖 Machine Learning Risk Model")
+        st.divider()
 
-    ml_features = [
-        "procurement_method",
-        "amount",
-        "number_of_quotes",
-        "tender_days",
-        "gppa_approval",
-        "supplier_registered",
-        "monthly_report_submitted",
-        "variation_percentage",
-    ]
+        st.subheader("🔍 Audit Filters")
 
-    X = final_df[ml_features]
-    y = final_df["AI Risk Category"]
+        col_a, col_b = st.columns(2)
 
-    if y.nunique() < 2:
-        st.warning("ML model needs at least two risk categories to train.")
-    else:
-        categorical_features = [
+        with col_a:
+            risk_filter = st.selectbox(
+                "Filter by Risk Category",
+                ["All", "High", "Medium", "Low"]
+            )
+
+        with col_b:
+            search = st.text_input("Search institution")
+
+        display_df = final_df.copy()
+
+        if risk_filter != "All":
+            display_df = display_df[display_df["AI Risk Category"] == risk_filter]
+
+        if search:
+            display_df = display_df[
+                display_df["institution"].astype(str).str.contains(search, case=False, na=False)
+            ]
+
+        st.subheader("🧾 Compliance Results")
+        audit_columns = [
+            "institution",
             "procurement_method",
-            "gppa_approval",
-            "supplier_registered",
-            "monthly_report_submitted",
-        ]
-
-        numeric_features = [
             "amount",
             "number_of_quotes",
             "tender_days",
+            "gppa_approval",
+            "supplier_registered",
+            "monthly_report_submitted",
+            "variation_percentage",
+            "compliance_score",
+            "AI Risk Score",
+            "AI Risk Category",
+            "compliance_flags",
+            "ai_risk_reasons"
+        ]
+
+        available_audit_columns = [col for col in audit_columns if col in display_df.columns]
+        st.dataframe(display_df[available_audit_columns], use_container_width=True)
+
+        st.subheader("📊 Risk Distribution")
+        risk_counts = final_df["AI Risk Category"].value_counts()
+        st.bar_chart(risk_counts)
+
+        st.subheader("📈 Compliance Score by Institution")
+        compliance_by_inst = (
+            final_df.groupby("institution")["compliance_score"]
+            .mean()
+            .sort_values()
+        )
+        st.bar_chart(compliance_by_inst)
+
+        st.subheader("🚨 Top 10 Highest Risk Procurements")
+        top_risk = final_df.sort_values(by="AI Risk Score", ascending=False).head(10)
+        st.dataframe(top_risk[available_audit_columns], use_container_width=True)
+
+        with st.expander("📌 How to interpret this audit report"):
+            st.write("""
+            This report helps identify procurement cases that may require further review.
+
+            Key indicators:
+            - **Compliance Score**: Percentage of GPPA-based checks passed.
+            - **AI Risk Score**: Weighted risk score based on procurement red flags.
+            - **Risk Category**: Low, Medium, or High.
+            - **Compliance Flags**: Specific issues detected in the procurement record.
+
+            This section is designed to be simple and useful for public-sector decision makers.
+            """)
+
+        csv = display_df.to_csv(index=False)
+
+        st.download_button(
+            label="Download Compliance Audit Report",
+            data=csv,
+            file_name="gppa_compliance_audit_report.csv",
+            mime="text/csv"
+        )
+
+    with tab2:
+        st.subheader("🤖 Machine Learning Model Training & Testing")
+        st.write(
+            "This section is designed for technical reviewers and recruiters. "
+            "It shows model training, class imbalance handling using SMOTE, evaluation metrics, "
+            "feature importance, and downloadable trained model."
+        )
+
+        ml_features = [
+            "procurement_method",
+            "amount",
+            "number_of_quotes",
+            "tender_days",
+            "gppa_approval",
+            "supplier_registered",
+            "monthly_report_submitted",
             "variation_percentage",
         ]
 
-        preprocessor = ColumnTransformer(
-            transformers=[
-                ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
-                ("num", "passthrough", numeric_features),
+        X = final_df[ml_features]
+        y = final_df["AI Risk Category"]
+
+        st.subheader("📊 Risk Category Distribution Before SMOTE")
+        before_smote = y.value_counts().reset_index()
+        before_smote.columns = ["Risk Category", "Count"]
+        st.dataframe(before_smote, use_container_width=True)
+
+        if y.nunique() < 2:
+            st.warning("ML model needs at least two risk categories to train.")
+        else:
+            categorical_features = [
+                "procurement_method",
+                "gppa_approval",
+                "supplier_registered",
+                "monthly_report_submitted",
             ]
-        )
 
-        model = RandomForestClassifier(
-    n_estimators=300,
-    random_state=42,
-    class_weight="balanced_subsample",
-    min_samples_leaf=2,
-    max_depth=8
-)
-
-        ml_pipeline = Pipeline(
-            steps=[
-                ("preprocessor", preprocessor),
-                ("model", model),
+            numeric_features = [
+                "amount",
+                "number_of_quotes",
+                "tender_days",
+                "variation_percentage",
             ]
-        )
 
-        X_train, X_test, y_train, y_test = train_test_split(
-            X,
-            y,
-            test_size=0.25,
-            random_state=42,
-            stratify=y if y.nunique() > 1 else None
-        )
+            preprocessor = ColumnTransformer(
+                transformers=[
+                    ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
+                    ("num", "passthrough", numeric_features),
+                ]
+            )
 
-        ml_pipeline.fit(X_train, y_train)
+            X_processed = preprocessor.fit_transform(X)
 
-        y_pred = ml_pipeline.predict(X_test)
-        accuracy = accuracy_score(y_test, y_pred)
+            min_class_count = y.value_counts().min()
 
-        final_df["ML Predicted Risk"] = ml_pipeline.predict(X)
+            if min_class_count > 1:
+                k_neighbors = min(5, min_class_count - 1)
 
-        st.metric("ML Model Accuracy", f"{accuracy * 100:.2f}%")
+                smote = SMOTE(
+                    random_state=42,
+                    k_neighbors=k_neighbors
+                )
 
-        st.write("Classification Report")
-        report = classification_report(y_test, y_pred, output_dict=True)
-        st.dataframe(pd.DataFrame(report).transpose(), use_container_width=True)
+                X_resampled, y_resampled = smote.fit_resample(X_processed, y)
 
-        fitted_preprocessor = ml_pipeline.named_steps["preprocessor"]
-        fitted_model = ml_pipeline.named_steps["model"]
+                st.subheader("📊 Risk Category Distribution After SMOTE")
+                after_smote = pd.Series(y_resampled).value_counts().reset_index()
+                after_smote.columns = ["Risk Category", "Count"]
+                st.dataframe(after_smote, use_container_width=True)
 
-        encoded_cat_names = fitted_preprocessor.named_transformers_["cat"].get_feature_names_out(categorical_features)
-        feature_names = list(encoded_cat_names) + numeric_features
+                X_train, X_test, y_train, y_test = train_test_split(
+                    X_resampled,
+                    y_resampled,
+                    test_size=0.25,
+                    random_state=42,
+                    stratify=y_resampled
+                )
+            else:
+                st.warning(
+                    "SMOTE was skipped because at least one risk category has only one record. "
+                    "Add more examples for each risk class to use SMOTE."
+                )
 
-        feature_importance = pd.DataFrame({
-            "Feature": feature_names,
-            "Importance": fitted_model.feature_importances_
-        }).sort_values(by="Importance", ascending=False)
+                X_train, X_test, y_train, y_test = train_test_split(
+                    X_processed,
+                    y,
+                    test_size=0.25,
+                    random_state=42,
+                    stratify=y if y.nunique() > 1 else None
+                )
 
-        st.subheader("Top ML Feature Importance")
-        st.bar_chart(feature_importance.set_index("Feature").head(10))
+            model = RandomForestClassifier(
+                n_estimators=300,
+                random_state=42,
+                class_weight="balanced_subsample",
+                min_samples_leaf=2,
+                max_depth=8
+            )
 
-    st.divider()
+            model.fit(X_train, y_train)
 
-    st.subheader("🔍 Filters")
+            y_pred = model.predict(X_test)
+            accuracy = accuracy_score(y_test, y_pred)
 
-    col_a, col_b = st.columns(2)
+            st.metric("ML Model Accuracy", f"{accuracy * 100:.2f}%")
 
-    with col_a:
-        risk_filter = st.selectbox(
-            "Filter by AI Risk Category",
-            ["All", "High", "Medium", "Low"]
-        )
+            st.subheader("📌 Confusion Matrix")
+            cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
+            cm_df = pd.DataFrame(cm, index=model.classes_, columns=model.classes_)
+            st.dataframe(cm_df, use_container_width=True)
 
-    with col_b:
-        search = st.text_input("Search institution")
+            st.subheader("📋 Classification Report")
+            report = classification_report(y_test, y_pred, output_dict=True)
+            st.dataframe(pd.DataFrame(report).transpose(), use_container_width=True)
 
-    display_df = final_df.copy()
+            final_df["ML Predicted Risk"] = model.predict(X_processed)
 
-    if risk_filter != "All":
-        display_df = display_df[display_df["AI Risk Category"] == risk_filter]
+            risk_probabilities = model.predict_proba(X_processed)
+            prob_df = pd.DataFrame(
+                risk_probabilities,
+                columns=[f"Probability_{label}" for label in model.classes_]
+            )
 
-    if search:
-        display_df = display_df[
-            display_df["institution"].astype(str).str.contains(search, case=False, na=False)
-        ]
+            final_df = pd.concat(
+                [final_df.reset_index(drop=True), prob_df.reset_index(drop=True)],
+                axis=1
+            )
 
-    st.subheader("📁 Uploaded Data")
-    st.dataframe(df, use_container_width=True)
+            final_df["Prediction Confidence"] = risk_probabilities.max(axis=1).round(3)
 
-    st.subheader("🧠 Compliance, AI Risk & ML Results")
-    st.dataframe(display_df, use_container_width=True)
+            encoded_cat_names = preprocessor.named_transformers_["cat"].get_feature_names_out(
+                categorical_features
+            )
 
-    st.subheader("📊 AI Risk Distribution")
-    risk_counts = final_df["AI Risk Category"].value_counts()
-    st.bar_chart(risk_counts)
+            feature_names = list(encoded_cat_names) + numeric_features
 
-    st.subheader("📈 Compliance Score by Institution")
-    compliance_by_inst = final_df.groupby("institution")["compliance_score"].mean().sort_values()
-    st.bar_chart(compliance_by_inst)
+            importance_df = pd.DataFrame({
+                "Feature": feature_names,
+                "Importance": model.feature_importances_
+            }).sort_values(by="Importance", ascending=False)
 
-    st.subheader("🚨 Top 10 Highest Risk Procurements")
-    top_risk = final_df.sort_values(by="AI Risk Score", ascending=False).head(10)
-    st.dataframe(top_risk, use_container_width=True)
+            st.subheader("📈 Top ML Feature Importance")
+            st.bar_chart(importance_df.set_index("Feature").head(10))
 
-    with st.expander("📌 What does the ML model do?"):
-        st.write("""
-        The ML model is a Random Forest classifier trained on the uploaded procurement records.
-        
-        It learns patterns from procurement features such as:
-        - Procurement method
-        - Procurement amount
-        - Number of quotations
-        - Tender period
-        - GPPA approval status
-        - Supplier registration status
-        - Monthly reporting status
-        - Contract variation percentage
-        
-        The model predicts whether a procurement case is Low, Medium, or High risk.
-        """)
+            st.subheader("🧠 ML Prediction Results")
+            ml_result_columns = [
+                "institution",
+                "procurement_method",
+                "amount",
+                "AI Risk Category",
+                "ML Predicted Risk",
+                "Prediction Confidence",
+            ]
 
-    csv = display_df.to_csv(index=False)
+            probability_cols = [col for col in final_df.columns if col.startswith("Probability_")]
+            ml_result_columns = ml_result_columns + probability_cols
+            available_ml_cols = [col for col in ml_result_columns if col in final_df.columns]
 
-    st.download_button(
-        label="Download Filtered ML Risk Report",
-        data=csv,
-        file_name="filtered_gppa_ml_risk_report.csv",
-        mime="text/csv"
-    )
+            st.dataframe(final_df[available_ml_cols], use_container_width=True)
+
+            with st.expander("📌 What does this ML model do?"):
+                st.write("""
+                This model uses a Random Forest classifier trained on procurement records.
+
+                It uses:
+                - Procurement method
+                - Procurement amount
+                - Number of quotations
+                - Tender period
+                - GPPA approval status
+                - Supplier registration status
+                - Monthly reporting status
+                - Contract variation percentage
+
+                SMOTE is used to address class imbalance by synthetically increasing the minority risk categories.
+                The model then predicts whether a procurement case is Low, Medium, or High risk.
+                """)
+
+            model_buffer = io.BytesIO()
+            joblib.dump(model, model_buffer)
+            model_buffer.seek(0)
+
+            st.download_button(
+                label="Download Trained ML Model",
+                data=model_buffer,
+                file_name="gppa_procurement_risk_model.pkl",
+                mime="application/octet-stream"
+            )
+
+            ml_csv = final_df.to_csv(index=False)
+
+            st.download_button(
+                label="Download ML Prediction Report",
+                data=ml_csv,
+                file_name="gppa_ml_prediction_report.csv",
+                mime="text/csv"
+            )
 
 else:
     st.info("Upload a CSV or Excel file to begin.")
