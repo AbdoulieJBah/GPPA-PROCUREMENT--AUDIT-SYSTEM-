@@ -1,17 +1,23 @@
 import streamlit as st
 import pandas as pd
 
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
+
 st.set_page_config(
-    page_title="GPPA Procurement Compliance & Audit System",
+    page_title="GPPA Procurement Compliance & ML Risk System",
     layout="wide"
 )
 
-st.title("📊 AI-Powered Procurement Compliance & Risk Intelligence System")
+st.title("🤖 AI/ML-Powered GPPA Procurement Risk Detection System")
 st.write(
-    "Upload procurement data and automatically detect compliance issues, risk patterns, and audit red flags based on GPPA procurement rules."
+    "Upload procurement data to detect compliance issues, calculate AI risk scores, "
+    "and train a real Machine Learning model to predict procurement risk."
 )
-
-st.divider()
 
 uploaded_file = st.file_uploader(
     "Upload procurement Excel/CSV file",
@@ -183,11 +189,100 @@ if uploaded_file:
     st.subheader("📌 Dashboard Summary")
 
     col1, col2, col3, col4 = st.columns(4)
-
     col1.metric("Total Procurements", len(final_df))
     col2.metric("Average Compliance Score", f"{final_df['compliance_score'].mean():.2f}%")
     col3.metric("Average AI Risk Score", f"{final_df['AI Risk Score'].mean():.2f}")
     col4.metric("High Risk Cases", (final_df["AI Risk Category"] == "High").sum())
+
+    st.divider()
+
+    st.subheader("🤖 Machine Learning Risk Model")
+
+    ml_features = [
+        "procurement_method",
+        "amount",
+        "number_of_quotes",
+        "tender_days",
+        "gppa_approval",
+        "supplier_registered",
+        "monthly_report_submitted",
+        "variation_percentage",
+    ]
+
+    X = final_df[ml_features]
+    y = final_df["AI Risk Category"]
+
+    if y.nunique() < 2:
+        st.warning("ML model needs at least two risk categories to train.")
+    else:
+        categorical_features = [
+            "procurement_method",
+            "gppa_approval",
+            "supplier_registered",
+            "monthly_report_submitted",
+        ]
+
+        numeric_features = [
+            "amount",
+            "number_of_quotes",
+            "tender_days",
+            "variation_percentage",
+        ]
+
+        preprocessor = ColumnTransformer(
+            transformers=[
+                ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
+                ("num", "passthrough", numeric_features),
+            ]
+        )
+
+        model = RandomForestClassifier(
+            n_estimators=200,
+            random_state=42,
+            class_weight="balanced"
+        )
+
+        ml_pipeline = Pipeline(
+            steps=[
+                ("preprocessor", preprocessor),
+                ("model", model),
+            ]
+        )
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            X,
+            y,
+            test_size=0.25,
+            random_state=42,
+            stratify=y if y.nunique() > 1 else None
+        )
+
+        ml_pipeline.fit(X_train, y_train)
+
+        y_pred = ml_pipeline.predict(X_test)
+        accuracy = accuracy_score(y_test, y_pred)
+
+        final_df["ML Predicted Risk"] = ml_pipeline.predict(X)
+
+        st.metric("ML Model Accuracy", f"{accuracy * 100:.2f}%")
+
+        st.write("Classification Report")
+        report = classification_report(y_test, y_pred, output_dict=True)
+        st.dataframe(pd.DataFrame(report).transpose(), use_container_width=True)
+
+        fitted_preprocessor = ml_pipeline.named_steps["preprocessor"]
+        fitted_model = ml_pipeline.named_steps["model"]
+
+        encoded_cat_names = fitted_preprocessor.named_transformers_["cat"].get_feature_names_out(categorical_features)
+        feature_names = list(encoded_cat_names) + numeric_features
+
+        feature_importance = pd.DataFrame({
+            "Feature": feature_names,
+            "Importance": fitted_model.feature_importances_
+        }).sort_values(by="Importance", ascending=False)
+
+        st.subheader("Top ML Feature Importance")
+        st.bar_chart(feature_importance.set_index("Feature").head(10))
 
     st.divider()
 
@@ -217,10 +312,10 @@ if uploaded_file:
     st.subheader("📁 Uploaded Data")
     st.dataframe(df, use_container_width=True)
 
-    st.subheader("🧠 Compliance & AI Risk Results")
+    st.subheader("🧠 Compliance, AI Risk & ML Results")
     st.dataframe(display_df, use_container_width=True)
 
-    st.subheader("📊 Risk Distribution")
+    st.subheader("📊 AI Risk Distribution")
     risk_counts = final_df["AI Risk Category"].value_counts()
     st.bar_chart(risk_counts)
 
@@ -232,28 +327,29 @@ if uploaded_file:
     top_risk = final_df.sort_values(by="AI Risk Score", ascending=False).head(10)
     st.dataframe(top_risk, use_container_width=True)
 
-    with st.expander("📌 What does the AI Risk Score mean?"):
+    with st.expander("📌 What does the ML model do?"):
         st.write("""
-        The AI Risk Score is a hybrid risk indicator combining:
+        The ML model is a Random Forest classifier trained on the uploaded procurement records.
         
-        - Rule-based compliance checks based on GPPA procurement logic
-        - Weighted risk scoring for audit red flags
+        It learns patterns from procurement features such as:
+        - Procurement method
+        - Procurement amount
+        - Number of quotations
+        - Tender period
+        - GPPA approval status
+        - Supplier registration status
+        - Monthly reporting status
+        - Contract variation percentage
         
-        Higher scores indicate higher procurement risk based on:
-        - Missing GPPA approval
-        - Low competition
-        - Short tender periods
-        - Unregistered suppliers
-        - Missing monthly reports
-        - Contract variations above 5%
+        The model predicts whether a procurement case is Low, Medium, or High risk.
         """)
 
     csv = display_df.to_csv(index=False)
 
     st.download_button(
-        label="Download Filtered Risk Report",
+        label="Download Filtered ML Risk Report",
         data=csv,
-        file_name="filtered_gppa_ai_risk_report.csv",
+        file_name="filtered_gppa_ml_risk_report.csv",
         mime="text/csv"
     )
 
