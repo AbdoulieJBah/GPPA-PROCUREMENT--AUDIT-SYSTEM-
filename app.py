@@ -237,10 +237,12 @@ if uploaded_file:
         )
 
         model = RandomForestClassifier(
-            n_estimators=200,
-            random_state=42,
-            class_weight="balanced"
-        )
+    n_estimators=300,
+    random_state=42,
+    class_weight="balanced_subsample",
+    min_samples_leaf=2,
+    max_depth=8
+)
 
         ml_pipeline = Pipeline(
             steps=[
