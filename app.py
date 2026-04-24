@@ -6,10 +6,12 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("GPPA Procurement Compliance & Audit System")
+st.title("📊 AI-Powered Procurement Compliance & Risk Intelligence System")
 st.write(
-    "Upload procurement data and automatically check compliance risks based on GPPA procurement rules."
+    "Upload procurement data and automatically detect compliance issues, risk patterns, and audit red flags based on GPPA procurement rules."
 )
+
+st.divider()
 
 uploaded_file = st.file_uploader(
     "Upload procurement Excel/CSV file",
@@ -35,49 +37,42 @@ def check_compliance(row):
     monthly_report = yes_no(row.get("monthly_report_submitted", "no"))
     variation_percent = float(row.get("variation_percentage", 0))
 
-    # Rule 1: RFQ requires at least 3 quotations
     total_rules += 1
     if method == "rfq" and quotes < 3:
         flags.append("RFQ has fewer than 3 quotations")
     else:
         passed_rules += 1
 
-    # Rule 2: GPPA approval required for procurement >= D1,000,000
     total_rules += 1
     if amount >= 1_000_000 and not gppa_approval:
         flags.append("GPPA approval missing for procurement ≥ D1,000,000")
     else:
         passed_rules += 1
 
-    # Rule 3: High-value procurement should use open/international tendering
     total_rules += 1
     if amount > 3_000_000 and method not in ["open_tender", "international_tender"]:
         flags.append("High-value procurement may require open/international tendering")
     else:
         passed_rules += 1
 
-    # Rule 4: Tender period should be at least 30 days for high-value procurement
     total_rules += 1
     if amount >= 1_000_000 and tender_days < 30:
         flags.append("Tender submission period is less than 30 days")
     else:
         passed_rules += 1
 
-    # Rule 5: Supplier registration
     total_rules += 1
     if not supplier_registered:
         flags.append("Supplier is not GPPA registered")
     else:
         passed_rules += 1
 
-    # Rule 6: Monthly report submission
     total_rules += 1
     if not monthly_report:
         flags.append("Monthly procurement report not submitted")
     else:
         passed_rules += 1
 
-    # Rule 7: Contract variation above 5%
     total_rules += 1
     if variation_percent > 5:
         flags.append("Contract variation above 5%")
@@ -127,9 +122,7 @@ def calculate_ai_risk(row):
         score += 10
         reasons.append("Contract variation above 5%")
 
-    score = min(score, 100)
-
-    return score, reasons
+    return min(score, 100), reasons
 
 
 def final_risk_level(score):
@@ -137,8 +130,7 @@ def final_risk_level(score):
         return "High"
     elif score >= 40:
         return "Medium"
-    else:
-        return "Low"
+    return "Low"
 
 
 if uploaded_file:
@@ -146,6 +138,8 @@ if uploaded_file:
         df = pd.read_csv(uploaded_file)
     else:
         df = pd.read_excel(uploaded_file)
+
+    df = df.loc[:, ~df.columns.duplicated()]
 
     required_columns = [
         "institution",
@@ -176,60 +170,90 @@ if uploaded_file:
 
         results.append({
             "compliance_score": compliance_score,
-            "ai_risk_score": ai_risk_score,
-            "final_risk_score": final_score,
-            "final_risk_level": final_level,
+            "AI Risk Score": final_score,
+            "AI Risk Category": final_level,
             "compliance_flags": "; ".join(flags) if flags else "Compliant",
             "ai_risk_reasons": "; ".join(ai_reasons) if ai_reasons else "Low risk"
         })
 
     results_df = pd.DataFrame(results)
     final_df = pd.concat([df, results_df], axis=1)
+    final_df = final_df.loc[:, ~final_df.columns.duplicated()]
 
-    st.subheader("Dashboard Summary")
+    st.subheader("📌 Dashboard Summary")
 
     col1, col2, col3, col4 = st.columns(4)
 
     col1.metric("Total Procurements", len(final_df))
     col2.metric("Average Compliance Score", f"{final_df['compliance_score'].mean():.2f}%")
-    col3.metric("Average Final Risk Score", f"{final_df['final_risk_score'].mean():.2f}")
-    col4.metric("High Risk Cases", (final_df["final_risk_level"] == "High").sum())
+    col3.metric("Average AI Risk Score", f"{final_df['AI Risk Score'].mean():.2f}")
+    col4.metric("High Risk Cases", (final_df["AI Risk Category"] == "High").sum())
 
     st.divider()
 
-    st.subheader("Risk Filter")
+    st.subheader("🔍 Filters")
 
-    risk_filter = st.selectbox(
-        "Filter by final risk level",
-        ["All", "High", "Medium", "Low"]
-    )
+    col_a, col_b = st.columns(2)
+
+    with col_a:
+        risk_filter = st.selectbox(
+            "Filter by AI Risk Category",
+            ["All", "High", "Medium", "Low"]
+        )
+
+    with col_b:
+        search = st.text_input("Search institution")
+
+    display_df = final_df.copy()
 
     if risk_filter != "All":
-        display_df = final_df[final_df["final_risk_level"] == risk_filter]
-    else:
-        display_df = final_df
+        display_df = display_df[display_df["AI Risk Category"] == risk_filter]
 
-    st.subheader("Uploaded Data")
+    if search:
+        display_df = display_df[
+            display_df["institution"].astype(str).str.contains(search, case=False, na=False)
+        ]
+
+    st.subheader("📁 Uploaded Data")
     st.dataframe(df, use_container_width=True)
 
-    st.subheader("Compliance & AI Risk Results")
+    st.subheader("🧠 Compliance & AI Risk Results")
     st.dataframe(display_df, use_container_width=True)
 
-    st.subheader("Risk Distribution")
-    risk_counts = final_df["final_risk_level"].value_counts().reset_index()
-    risk_counts.columns = ["Risk Level", "Count"]
-    st.bar_chart(risk_counts.set_index("Risk Level"))
+    st.subheader("📊 Risk Distribution")
+    risk_counts = final_df["AI Risk Category"].value_counts()
+    st.bar_chart(risk_counts)
 
-    st.subheader("Top 10 Highest Risk Procurements")
-    top_risk = final_df.sort_values(by="final_risk_score", ascending=False).head(10)
+    st.subheader("📈 Compliance Score by Institution")
+    compliance_by_inst = final_df.groupby("institution")["compliance_score"].mean().sort_values()
+    st.bar_chart(compliance_by_inst)
+
+    st.subheader("🚨 Top 10 Highest Risk Procurements")
+    top_risk = final_df.sort_values(by="AI Risk Score", ascending=False).head(10)
     st.dataframe(top_risk, use_container_width=True)
 
-    csv = final_df.to_csv(index=False)
+    with st.expander("📌 What does the AI Risk Score mean?"):
+        st.write("""
+        The AI Risk Score is a hybrid risk indicator combining:
+        
+        - Rule-based compliance checks based on GPPA procurement logic
+        - Weighted risk scoring for audit red flags
+        
+        Higher scores indicate higher procurement risk based on:
+        - Missing GPPA approval
+        - Low competition
+        - Short tender periods
+        - Unregistered suppliers
+        - Missing monthly reports
+        - Contract variations above 5%
+        """)
+
+    csv = display_df.to_csv(index=False)
 
     st.download_button(
-        label="Download Full Compliance Report",
+        label="Download Filtered Risk Report",
         data=csv,
-        file_name="gppa_compliance_ai_risk_report.csv",
+        file_name="filtered_gppa_ai_risk_report.csv",
         mime="text/csv"
     )
 
