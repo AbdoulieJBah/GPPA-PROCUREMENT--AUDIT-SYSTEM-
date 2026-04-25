@@ -26,22 +26,20 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-.main {
-    background-color: #f5f7fb;
-}
 .kpi-card {
     background-color: white;
-    padding: 18px;
-    border-radius: 14px;
-    box-shadow: 0px 2px 8px rgba(0,0,0,0.08);
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0px 2px 6px rgba(0,0,0,0.08);
     text-align: center;
+    margin-bottom: 10px;
 }
 .kpi-title {
-    font-size: 14px;
-    color: #666;
+    font-size: 13px;
+    color: #777;
 }
 .kpi-value {
-    font-size: 28px;
+    font-size: 30px;
     font-weight: bold;
     color: #1f4e79;
 }
