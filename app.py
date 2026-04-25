@@ -17,8 +17,9 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
 import plotly.express as px
+from openai import OpenAI
 
-
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 st.set_page_config(
     page_title="GPPA Advanced AI Procurement Risk System",
     layout="wide"
@@ -594,9 +595,7 @@ if uploaded_file:
             - Digital transformation of procurement compliance monitoring
             """)
 
-        import openai
-
-        openai.api_key = st.secrets["OPENAI_API_KEY"]
+        
         
         st.subheader("🤖 AI Compliance Intelligence Agent")
         
@@ -606,7 +605,7 @@ if uploaded_file:
         
         def run_ai_agent(question, df):
             # Convert data sample to text (avoid overload)
-            sample_data = df.head(20).to_dict(orient="records")
+            sample_data = df.sample(min(30, len(df))).to_dict(orient="records")
         
             prompt = f"""
         You are an expert AI auditor working for GPPA (Public Procurement Authority).
@@ -641,6 +640,191 @@ if uploaded_file:
             with st.spinner("Analyzing data..."):
                 answer = run_ai_agent(question, display_df)
             st.markdown(answer)
+
+        st.subheader("🎯 Explain Selected Procurement")
+
+        if len(display_df) > 0:
+            selected_index = st.selectbox(
+                "Select procurement record",
+                display_df.index,
+                format_func=lambda x: f"{x} - {display_df.loc[x, 'institution']} | {display_df.loc[x, 'AI Risk Category']}"
+            )
+        
+            st.dataframe(display_df.loc[[selected_index]], use_container_width=True)
+        
+            if st.button("Explain this procurement"):
+                selected_row = display_df.loc[selected_index].to_dict()
+        
+                prompt = f"""
+        You are an expert GPPA procurement auditor.
+        
+        Explain this procurement record in simple professional language:
+        {selected_row}
+        
+        Explain:
+        1. Why it is risky or compliant
+        2. Which compliance issues matter most
+        3. What action an auditor should take next
+        4. A short recommendation for a GPPA director
+        """
+        
+                with st.spinner("Generating explanation..."):
+                    response = client.responses.create(
+                        model="gpt-5.5",
+                        input=prompt
+                    )
+        
+                st.markdown(response.output_text)
+        else:
+            st.info("No procurement records available to explain.")
+
+
+        st.subheader("🤖 GPPA AI Compliance Copilot")
+
+        if "copilot_messages" not in st.session_state:
+            st.session_state.copilot_messages = []
+        
+        for msg in st.session_state.copilot_messages:
+            with st.chat_message(msg["role"]):
+                st.markdown(msg["content"])
+        
+        def run_ai_copilot(question, df):
+            sample_data = df.sample(min(30, len(df))).to_dict(orient="records")
+        
+            context = f"""
+        You are an expert AI procurement auditor for GPPA.
+        
+        You can answer questions about:
+        - Procurement compliance
+        - Risk levels
+        - High-risk procurements
+        - Anomalies
+        - Audit recommendations
+        - GPPA-style red flags
+        - Dataset insights
+        
+        Dataset sample:
+        {sample_data}
+        
+        Summary:
+        Total records: {len(df)}
+        High risk cases: {(df["AI Risk Category"] == "High").sum() if "AI Risk Category" in df.columns else 0}
+        Average risk score: {df["AI Risk Score"].mean() if "AI Risk Score" in df.columns else 0:.2f}
+        Average compliance score: {df["Compliance Score"].mean() if "Compliance Score" in df.columns else 0:.2f}
+        """
+        
+            response = client.responses.create(
+                model="gpt-5.5",
+                input=[
+                    {
+                        "role": "system",
+                        "content": context
+                    },
+                    *[
+                        {
+                            "role": m["role"],
+                            "content": m["content"]
+                        }
+                        for m in st.session_state.copilot_messages[-6:]
+                    ],
+                    {
+                        "role": "user",
+                        "content": question
+                    }
+                ],
+            )
+        
+            return response.output_text
+        
+        user_question = st.chat_input("Ask the AI copilot about compliance, risk, anomalies, or audit priorities")
+        
+        if user_question:
+            st.session_state.copilot_messages.append({
+                "role": "user",
+                "content": user_question
+            })
+        
+            with st.chat_message("user"):
+                st.markdown(user_question)
+        
+            with st.chat_message("assistant"):
+                with st.spinner("Analyzing procurement data..."):
+                    answer = run_ai_copilot(user_question, display_df)
+                    st.markdown(answer)
+        
+            st.session_state.copilot_messages.append({
+                "role": "assistant",
+                "content": answer
+            })
+
+        if user_question:
+            q = user_question.lower()
+        
+            if "risk distribution" in q or "pie chart" in q:
+                chart_df = display_df["AI Risk Category"].value_counts().reset_index()
+                chart_df.columns = ["Risk Category", "Count"]
+        
+                fig = px.pie(
+                    chart_df,
+                    names="Risk Category",
+                    values="Count",
+                    title="Risk Distribution",
+                    hole=0.45
+                )
+                st.plotly_chart(fig, use_container_width=True)
+        
+            elif "institution" in q and "risk" in q:
+                chart_df = (
+                    display_df.groupby("institution")["AI Risk Score"]
+                    .mean()
+                    .reset_index()
+                    .sort_values("AI Risk Score", ascending=False)
+                )
+        
+                fig = px.bar(
+                    chart_df,
+                    x="AI Risk Score",
+                    y="institution",
+                    orientation="h",
+                    title="Average Risk by Institution"
+                )
+                st.plotly_chart(fig, use_container_width=True)
+
+        st.subheader("📄 AI-Written Executive Report")
+
+        if st.button("Generate AI Executive Report"):
+            report_sample = display_df.sort_values("AI Risk Score", ascending=False).head(20).to_dict(orient="records")
+        
+            report_prompt = f"""
+        You are an expert public procurement audit analyst.
+        
+        Write a concise executive report for GPPA directors based on this procurement data.
+        
+        Include:
+        - Overall risk summary
+        - Key compliance weaknesses
+        - Top audit priorities
+        - Recommended actions
+        - Short conclusion
+        
+        Data sample:
+        {report_sample}
+        """
+        
+            with st.spinner("Writing executive report..."):
+                report_response = client.responses.create(
+                    model="gpt-5.5",
+                    input=report_prompt
+                )
+        
+            st.markdown(report_response.output_text)
+        
+            st.download_button(
+                "Download AI Executive Report",
+                report_response.output_text,
+                "gppa_ai_executive_report.txt",
+                "text/plain"
+            )
     
         # -----------------------------
         # DOWNLOADS
