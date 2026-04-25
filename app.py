@@ -597,6 +597,27 @@ if uploaded_file:
                 "gppa_saved_ml_pipeline.pkl",
                 "application/octet-stream"
             )
+
+            st.subheader("🎯 Filter ML Results")
+
+            risk_filter = st.multiselect(
+                "Select Risk Levels",
+                options=final_df["AI Risk Category"].unique(),
+                default=list(final_df["AI Risk Category"].unique())
+            )
+            
+            anomaly_filter = st.selectbox(
+                "Anomaly Filter",
+                ["All", "Only Anomalies", "Only Normal"]
+            )
+            
+            filtered_df = final_df[final_df["AI Risk Category"].isin(risk_filter)]
+            
+            if "Anomaly Flag" in filtered_df.columns:
+                if anomaly_filter == "Only Anomalies":
+                    filtered_df = filtered_df[filtered_df["Anomaly Flag"] == "Anomaly"]
+                elif anomaly_filter == "Only Normal":
+                    filtered_df = filtered_df[filtered_df["Anomaly Flag"] == "Normal"]
     
             st.subheader("🧠 ML Prediction Results")
     
@@ -614,7 +635,20 @@ if uploaded_file:
             ml_cols += [c for c in final_df.columns if c.startswith("Probability_")]
             ml_cols = [c for c in ml_cols if c in final_df.columns]
     
-            st.dataframe(final_df[ml_cols], use_container_width=True)
+            st.dataframe(filtered_df[ml_cols], use_container_width=True)
+
+            st.subheader("🔍 Inspect Individual Procurement")
+
+            if len(filtered_df) > 0:
+                selected_index = st.selectbox(
+                    "Select a procurement to inspect",
+                    filtered_df.index,
+                    format_func=lambda x: f"{x} - {filtered_df.loc[x, 'institution']} ({filtered_df.loc[x, 'procurement_method']})"
+                )
+            
+                st.dataframe(filtered_df.loc[[selected_index]], use_container_width=True)
+            else:
+                st.warning("No records match the selected filters.")
     
             st.download_button(
                 "Download Advanced ML Prediction Report",
