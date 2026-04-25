@@ -219,6 +219,30 @@ if uploaded_file:
     ])
 
     with tab1:
+        total = len(final_df)
+        high_risk = (final_df["AI Risk Category"] == "High").sum()
+        anomalies = (final_df["Anomaly Flag"] == "Anomaly").sum()
+        
+        st.markdown("### 📊 Executive Summary")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric("Total Procurements", total)
+        
+        with col2:
+            st.metric(
+                "High Risk Cases",
+                high_risk,
+                f"{(high_risk/total)*100:.1f}%"
+            )
+        
+        with col3:
+            st.metric(
+                "Anomalies Detected",
+                anomalies,
+                f"{(anomalies/total)*100:.1f}%"
+            )
         st.subheader("📋 Executive Compliance Dashboard")
         st.write(
             "Designed for GPPA directors, auditors, and decision-makers. "
