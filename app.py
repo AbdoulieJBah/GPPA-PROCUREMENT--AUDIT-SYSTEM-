@@ -20,6 +20,8 @@ import plotly.express as px
 from openai import OpenAI
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+st.write("OpenAI key loaded:", "OPENAI_API_KEY" in st.secrets)
+
 st.set_page_config(
     page_title="GPPA Advanced AI Procurement Risk System",
     layout="wide"
