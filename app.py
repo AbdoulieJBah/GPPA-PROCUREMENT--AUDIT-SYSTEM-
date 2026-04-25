@@ -328,7 +328,7 @@ if uploaded_file:
             "text/csv"
         )
 
-    with tab2:
+   with tab2:
     st.subheader("🤖 Advanced Machine Learning Training & Testing")
 
     ml_features = [
