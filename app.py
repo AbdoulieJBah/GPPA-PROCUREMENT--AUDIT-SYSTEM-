@@ -429,7 +429,7 @@ if uploaded_file:
         # BI-STYLE CHARTS
         # -----------------------------
         if total > 0:
-            st.subheader("📊 Power BI-Style Risk Dashboard")
+            st.markdown("## 📊 GPPA Executive Risk Intelligence Dashboard")
     
             risk_colors = {
                 "High": "#d62728",
