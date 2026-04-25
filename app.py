@@ -593,6 +593,54 @@ if uploaded_file:
             - Evidence-based inspection planning
             - Digital transformation of procurement compliance monitoring
             """)
+
+        import openai
+
+        openai.api_key = st.secrets["OPENAI_API_KEY"]
+        
+        st.subheader("🤖 AI Compliance Intelligence Agent")
+        
+        question = st.text_input(
+            "Ask anything about procurement compliance, risk, or insights"
+        )
+        
+        def run_ai_agent(question, df):
+            # Convert data sample to text (avoid overload)
+            sample_data = df.head(20).to_dict(orient="records")
+        
+            prompt = f"""
+        You are an expert AI auditor working for GPPA (Public Procurement Authority).
+        
+        Your job is to analyze procurement data and answer questions about:
+        - Compliance issues
+        - Risk levels
+        - Procurement patterns
+        - Anomalies
+        - Audit recommendations
+        
+        Here is sample procurement data:
+        {sample_data}
+        
+        User question:
+        {question}
+        
+        Answer clearly like a professional audit analyst.
+        Provide insights, not just raw numbers.
+        """
+        
+            response = openai.ChatCompletion.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3
+            )
+        
+            return response.choices[0].message["content"]
+        
+        
+        if question:
+            with st.spinner("Analyzing data..."):
+                answer = run_ai_agent(question, display_df)
+            st.markdown(answer)
     
         # -----------------------------
         # DOWNLOADS
