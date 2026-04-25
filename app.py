@@ -16,12 +16,37 @@ import shap
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
+import plotly.express as px
 
 
 st.set_page_config(
     page_title="GPPA Advanced AI Procurement Risk System",
     layout="wide"
 )
+
+st.markdown("""
+<style>
+.main {
+    background-color: #f5f7fb;
+}
+.kpi-card {
+    background-color: white;
+    padding: 18px;
+    border-radius: 14px;
+    box-shadow: 0px 2px 8px rgba(0,0,0,0.08);
+    text-align: center;
+}
+.kpi-title {
+    font-size: 14px;
+    color: #666;
+}
+.kpi-value {
+    font-size: 28px;
+    font-weight: bold;
+    color: #1f4e79;
+}
+</style>
+""", unsafe_allow_html=True)
 
 st.title("AI-Powered GPPA Procurement Compliance & Risk System")
 st.write(
@@ -380,34 +405,123 @@ if uploaded_file:
         st.subheader("🧾 Compliance Audit Results")
         st.dataframe(display_df[audit_cols], use_container_width=True)
 
-        st.subheader("📊 Risk Distribution")
-        st.bar_chart(final_df["AI Risk Category"].value_counts())
+        st.subheader("📊 Power BI-Style Executive Dashboard")
 
-        st.subheader("📊 Average Risk by Procurement Category")
-        st.bar_chart(final_df.groupby("procurement_category")["AI Risk Score"].mean().sort_values())
-
-        st.subheader("📊 Average Risk by Procurement Method")
-        st.bar_chart(final_df.groupby("procurement_method")["AI Risk Score"].mean().sort_values())
-
-        st.subheader("📈 Average Compliance by Institution")
-        st.bar_chart(final_df.groupby("institution")["Compliance Score"].mean().sort_values())
-
-        st.subheader("📊 Risk Dashboard Charts")
-
+        total = len(final_df)
+        high_risk = (final_df["AI Risk Category"] == "High").sum()
+        avg_risk = final_df["AI Risk Score"].mean()
+        avg_compliance = final_df["Compliance Score"].mean()
+        
+        kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+        
+        with kpi1:
+            st.markdown(f"""
+            <div class="kpi-card">
+                <div class="kpi-title">Total Procurements</div>
+                <div class="kpi-value">{total}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with kpi2:
+            st.markdown(f"""
+            <div class="kpi-card">
+                <div class="kpi-title">High Risk Cases</div>
+                <div class="kpi-value">{high_risk}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with kpi3:
+            st.markdown(f"""
+            <div class="kpi-card">
+                <div class="kpi-title">Avg Risk Score</div>
+                <div class="kpi-value">{avg_risk:.1f}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with kpi4:
+            st.markdown(f"""
+            <div class="kpi-card">
+                <div class="kpi-title">Avg Compliance</div>
+                <div class="kpi-value">{avg_compliance:.1f}%</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        
+        risk_colors = {
+            "High": "#d62728",
+            "Medium": "#ff7f0e",
+            "Low": "#2ca02c"
+        }
+        
         col1, col2 = st.columns(2)
         
         with col1:
-            st.write("Risk Distribution")
-            st.bar_chart(final_df["AI Risk Category"].value_counts())
+            risk_counts = final_df["AI Risk Category"].value_counts().reset_index()
+            risk_counts.columns = ["Risk Category", "Count"]
+        
+            fig_risk = px.pie(
+                risk_counts,
+                names="Risk Category",
+                values="Count",
+                title="Risk Distribution",
+                hole=0.45,
+                color="Risk Category",
+                color_discrete_map=risk_colors
+            )
+            fig_risk.update_layout(height=420)
+            st.plotly_chart(fig_risk, use_container_width=True)
         
         with col2:
-            st.write("Risk per Institution")
+            category_counts = final_df["procurement_category"].value_counts().reset_index()
+            category_counts.columns = ["Procurement Category", "Count"]
+        
+            fig_category = px.pie(
+                category_counts,
+                names="Procurement Category",
+                values="Count",
+                title="Procurement Category Distribution",
+                hole=0.45
+            )
+            fig_category.update_layout(height=420)
+            st.plotly_chart(fig_category, use_container_width=True)
+        
+        col3, col4 = st.columns(2)
+        
+        with col3:
             institution_risk = (
                 final_df.groupby("institution")["AI Risk Score"]
                 .mean()
-                .sort_values(ascending=False)
+                .reset_index()
+                .sort_values("AI Risk Score", ascending=False)
             )
-            st.bar_chart(institution_risk)
+        
+            fig_inst = px.bar(
+                institution_risk,
+                x="AI Risk Score",
+                y="institution",
+                orientation="h",
+                title="Average Risk Score by Institution"
+            )
+            fig_inst.update_layout(height=500, yaxis={"categoryorder": "total ascending"})
+            st.plotly_chart(fig_inst, use_container_width=True)
+        
+        with col4:
+            method_risk = (
+                final_df.groupby("procurement_method")["AI Risk Score"]
+                .mean()
+                .reset_index()
+                .sort_values("AI Risk Score", ascending=False)
+            )
+        
+            fig_method = px.bar(
+                method_risk,
+                x="procurement_method",
+                y="AI Risk Score",
+                title="Average Risk by Procurement Method"
+            )
+            fig_method.update_layout(height=500)
+            st.plotly_chart(fig_method, use_container_width=True)
 
         st.subheader("🚨 Auto Red Flags Panel")
 
