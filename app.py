@@ -13,6 +13,9 @@ from imblearn.over_sampling import SMOTE
 from sklearn.model_selection import cross_val_score, StratifiedKFold, GridSearchCV
 from sklearn.ensemble import IsolationForest
 import shap
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
 
 
 st.set_page_config(
@@ -209,6 +212,60 @@ if uploaded_file:
             "Risk Reasons": "; ".join(risk_reasons) if risk_reasons else "Low risk"
         })
 
+    def generate_pdf_report(df):
+        buffer = io.BytesIO()
+        c = canvas.Canvas(buffer, pagesize=A4)
+    
+        width, height = A4
+        y = height - 50
+    
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(50, y, "GPPA Procurement Risk & Compliance Report")
+    
+        y -= 35
+        c.setFont("Helvetica", 10)
+        c.drawString(50, y, f"Total Procurements: {len(df)}")
+    
+        y -= 20
+        high_risk = (df["AI Risk Category"] == "High").sum()
+        c.drawString(50, y, f"High Risk Cases: {high_risk}")
+    
+        y -= 20
+        if "Anomaly Flag" in df.columns:
+            anomalies = (df["Anomaly Flag"] == "Anomaly").sum()
+        else:
+            anomalies = 0
+        c.drawString(50, y, f"Anomalies Detected: {anomalies}")
+    
+        y -= 35
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(50, y, "Top 5 Riskiest Procurements")
+    
+        y -= 25
+        c.setFont("Helvetica", 8)
+    
+        top5 = df.sort_values("AI Risk Score", ascending=False).head(5)
+    
+        for _, row in top5.iterrows():
+            text = (
+                f"{row.get('institution', '')} | "
+                f"{row.get('procurement_category', '')} | "
+                f"Risk Score: {row.get('AI Risk Score', '')} | "
+                f"Risk: {row.get('AI Risk Category', '')}"
+            )
+    
+            c.drawString(50, y, text[:110])
+            y -= 18
+    
+            if y < 80:
+                c.showPage()
+                y = height - 50
+                c.setFont("Helvetica", 8)
+    
+        c.save()
+        buffer.seek(0)
+        return buffer
+
     final_df = pd.concat([df.reset_index(drop=True), pd.DataFrame(results)], axis=1)
     final_df = final_df.loc[:, ~final_df.columns.duplicated()]
 
@@ -335,6 +392,42 @@ if uploaded_file:
         st.subheader("📈 Average Compliance by Institution")
         st.bar_chart(final_df.groupby("institution")["Compliance Score"].mean().sort_values())
 
+        st.subheader("📊 Risk Dashboard Charts")
+
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.write("Risk Distribution")
+            st.bar_chart(final_df["AI Risk Category"].value_counts())
+        
+        with col2:
+            st.write("Risk per Institution")
+            institution_risk = (
+                final_df.groupby("institution")["AI Risk Score"]
+                .mean()
+                .sort_values(ascending=False)
+            )
+            st.bar_chart(institution_risk)
+
+        st.subheader("🚨 Auto Red Flags Panel")
+
+        top5_risk = final_df.sort_values("AI Risk Score", ascending=False).head(5)
+        
+        red_flag_cols = [
+            "institution",
+            "procurement_category",
+            "procurement_method",
+            "amount",
+            "AI Risk Score",
+            "AI Risk Category",
+            "Compliance Flags",
+            "Risk Reasons",
+        ]
+        
+        red_flag_cols = [c for c in red_flag_cols if c in top5_risk.columns]
+        
+        st.dataframe(top5_risk[red_flag_cols], use_container_width=True)
+
         st.subheader("🚨 Top 10 Highest Risk Procurements")
         top_risk = final_df.sort_values("AI Risk Score", ascending=False).head(10)
         st.dataframe(top_risk[audit_cols], use_container_width=True)
@@ -354,6 +447,15 @@ if uploaded_file:
             display_df.to_csv(index=False),
             "gppa_compliance_audit_report.csv",
             "text/csv"
+        )
+
+        pdf_buffer = generate_pdf_report(final_df)
+    
+        st.download_button(
+            label="📄 Download Professional PDF Report",
+            data=pdf_buffer,
+            file_name="gppa_procurement_risk_report.pdf",
+            mime="application/pdf"
         )
 
     with tab2:
