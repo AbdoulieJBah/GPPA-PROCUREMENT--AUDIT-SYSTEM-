@@ -328,303 +328,303 @@ if uploaded_file:
             "text/csv"
         )
 
-   with tab2:
-        st.subheader("🤖 Advanced Machine Learning Training & Testing")
+  with tab2:
+    st.subheader("🤖 Advanced Machine Learning Training & Testing")
 
-        ml_features = [
+    ml_features = [
+        "procurement_category",
+        "procurement_method",
+        "amount",
+        "number_of_quotes",
+        "tender_days",
+        "gppa_approval",
+        "supplier_registered",
+        "monthly_report_submitted",
+        "variation_percentage",
+    ]
+
+    X = final_df[ml_features]
+    y = final_df["AI Risk Category"]
+
+    st.subheader("📊 Risk Category Distribution Before SMOTE")
+    before = y.value_counts().reset_index()
+    before.columns = ["Risk Category", "Count"]
+    st.dataframe(before, use_container_width=True)
+
+    if y.nunique() < 2:
+        st.warning("At least two risk classes are required to train the ML model.")
+    else:
+        categorical_features = [
             "procurement_category",
             "procurement_method",
-            "amount",
-            "number_of_quotes",
-            "tender_days",
             "gppa_approval",
             "supplier_registered",
             "monthly_report_submitted",
+        ]
+
+        numeric_features = [
+            "amount",
+            "number_of_quotes",
+            "tender_days",
             "variation_percentage",
         ]
 
-        X = final_df[ml_features]
-        y = final_df["AI Risk Category"]
-    
-        st.subheader("📊 Risk Category Distribution Before SMOTE")
-        before = y.value_counts().reset_index()
-        before.columns = ["Risk Category", "Count"]
-        st.dataframe(before, use_container_width=True)
-    
-        if y.nunique() < 2:
-            st.warning("At least two risk classes are required to train the ML model.")
-        else:
-            categorical_features = [
-                "procurement_category",
-                "procurement_method",
-                "gppa_approval",
-                "supplier_registered",
-                "monthly_report_submitted",
+        preprocessor = ColumnTransformer(
+            transformers=[
+                ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
+                ("num", "passthrough", numeric_features),
             ]
+        )
 
-            numeric_features = [
-                "amount",
-                "number_of_quotes",
-                "tender_days",
-                "variation_percentage",
-            ]
-    
-            preprocessor = ColumnTransformer(
-                transformers=[
-                    ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
-                    ("num", "passthrough", numeric_features),
-                ]
-            )
-    
-            X_processed = preprocessor.fit_transform(X)
-    
-            min_count = y.value_counts().min()
-    
-            if min_count > 1:
-                smote = SMOTE(random_state=42, k_neighbors=min(5, min_count - 1))
-                X_res, y_res = smote.fit_resample(X_processed, y)
-    
-                st.subheader("📊 Risk Category Distribution After SMOTE")
-                after = pd.Series(y_res).value_counts().reset_index()
-                after.columns = ["Risk Category", "Count"]
-                st.dataframe(after, use_container_width=True)
-            else:
-                st.warning("SMOTE skipped because one class has only one record.")
-                X_res, y_res = X_processed, y
-    
-            X_train, X_test, y_train, y_test = train_test_split(
-                X_res,
-                y_res,
-                test_size=0.25,
-                random_state=42,
-                stratify=y_res if pd.Series(y_res).nunique() > 1 else None
-            )
-    
-            st.subheader("🔧 Hyperparameter Tuning with GridSearchCV")
-    
-            rf_grid = {
-                "n_estimators": [100, 300],
-                "max_depth": [6, 8, None],
-                "min_samples_leaf": [1, 2],
-                "class_weight": ["balanced_subsample"],
-            }
-    
-            grid_search = GridSearchCV(
-                RandomForestClassifier(random_state=42),
-                rf_grid,
-                cv=3,
-                scoring="accuracy",
-                n_jobs=-1
-            )
-    
-            grid_search.fit(X_train, y_train)
-    
-            best_rf = grid_search.best_estimator_
-    
-            st.write("Best Random Forest Parameters:")
-            st.json(grid_search.best_params_)
-    
-            st.subheader("🏆 Model Comparison")
-    
-            models = {
-                "Tuned Random Forest": best_rf,
-                "Gradient Boosting": GradientBoostingClassifier(random_state=42),
-                "Logistic Regression": LogisticRegression(max_iter=1000),
-            }
-    
-            comparison = []
-    
-            for name, model in models.items():
-                model.fit(X_train, y_train)
-                pred = model.predict(X_test)
-                acc = accuracy_score(y_test, pred)
-    
-                comparison.append({
-                    "Model": name,
-                    "Accuracy": round(acc, 4)
-                })
-    
-            comparison_df = pd.DataFrame(comparison).sort_values("Accuracy", ascending=False)
-    
-            st.dataframe(comparison_df, use_container_width=True)
-            st.bar_chart(comparison_df.set_index("Model"))
-    
-            best_model_name = comparison_df.iloc[0]["Model"]
-            best_model = models[best_model_name]
-            best_model.fit(X_train, y_train)
-    
-            st.success(f"Best model selected: {best_model_name}")
-    
-            st.subheader("✅ Cross-Validation Score")
-    
-            cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
-    
-            cv_scores = cross_val_score(
-                best_model,
-                X_res,
-                y_res,
-                cv=cv,
-                scoring="accuracy"
-            )
-    
-            st.write(f"Cross-validation accuracy: **{cv_scores.mean() * 100:.2f}%**")
-            st.write(f"Standard deviation: **{cv_scores.std() * 100:.2f}%**")
-    
-            pred = best_model.predict(X_test)
+        X_processed = preprocessor.fit_transform(X)
+
+        min_count = y.value_counts().min()
+
+        if min_count > 1:
+            smote = SMOTE(random_state=42, k_neighbors=min(5, min_count - 1))
+            X_res, y_res = smote.fit_resample(X_processed, y)
+
+            st.subheader("📊 Risk Category Distribution After SMOTE")
+            after = pd.Series(y_res).value_counts().reset_index()
+            after.columns = ["Risk Category", "Count"]
+            st.dataframe(after, use_container_width=True)
+        else:
+            st.warning("SMOTE skipped because one class has only one record.")
+            X_res, y_res = X_processed, y
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            X_res,
+            y_res,
+            test_size=0.25,
+            random_state=42,
+            stratify=y_res if pd.Series(y_res).nunique() > 1 else None
+        )
+
+        st.subheader("🔧 Hyperparameter Tuning with GridSearchCV")
+
+        rf_grid = {
+            "n_estimators": [100, 300],
+            "max_depth": [6, 8, None],
+            "min_samples_leaf": [1, 2],
+            "class_weight": ["balanced_subsample"],
+        }
+
+        grid_search = GridSearchCV(
+            RandomForestClassifier(random_state=42),
+            rf_grid,
+            cv=3,
+            scoring="accuracy",
+            n_jobs=-1
+        )
+
+        grid_search.fit(X_train, y_train)
+
+        best_rf = grid_search.best_estimator_
+
+        st.write("Best Random Forest Parameters:")
+        st.json(grid_search.best_params_)
+
+        st.subheader("🏆 Model Comparison")
+
+        models = {
+            "Tuned Random Forest": best_rf,
+            "Gradient Boosting": GradientBoostingClassifier(random_state=42),
+            "Logistic Regression": LogisticRegression(max_iter=1000),
+        }
+
+        comparison = []
+
+        for name, model in models.items():
+            model.fit(X_train, y_train)
+            pred = model.predict(X_test)
             acc = accuracy_score(y_test, pred)
-    
-            st.metric("Test Accuracy", f"{acc * 100:.2f}%")
-    
-            st.subheader("📌 Confusion Matrix")
-            cm = confusion_matrix(y_test, pred, labels=best_model.classes_)
-            cm_df = pd.DataFrame(cm, index=best_model.classes_, columns=best_model.classes_)
-            st.dataframe(cm_df, use_container_width=True)
-    
-            st.subheader("📋 Classification Report")
-            report = classification_report(y_test, pred, output_dict=True)
-            st.dataframe(pd.DataFrame(report).transpose(), use_container_width=True)
-    
-            final_df["ML Predicted Risk"] = best_model.predict(X_processed)
-    
-            if hasattr(best_model, "predict_proba"):
-                probs = best_model.predict_proba(X_processed)
-                prob_df = pd.DataFrame(
-                    probs,
-                    columns=[f"Probability_{label}" for label in best_model.classes_]
-                )
-    
-                final_df = pd.concat(
-                    [final_df.reset_index(drop=True), prob_df.reset_index(drop=True)],
-                    axis=1
-                )
-    
-                final_df["Prediction Confidence"] = probs.max(axis=1).round(3)
-    
-            st.subheader("🚨 Anomaly Detection")
-    
-            anomaly_model = IsolationForest(
-                contamination=0.08,
-                random_state=42
+
+            comparison.append({
+                "Model": name,
+                "Accuracy": round(acc, 4)
+            })
+
+        comparison_df = pd.DataFrame(comparison).sort_values("Accuracy", ascending=False)
+
+        st.dataframe(comparison_df, use_container_width=True)
+        st.bar_chart(comparison_df.set_index("Model"))
+
+        best_model_name = comparison_df.iloc[0]["Model"]
+        best_model = models[best_model_name]
+        best_model.fit(X_train, y_train)
+
+        st.success(f"Best model selected: {best_model_name}")
+
+        st.subheader("✅ Cross-Validation Score")
+
+        cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
+
+        cv_scores = cross_val_score(
+            best_model,
+            X_res,
+            y_res,
+            cv=cv,
+            scoring="accuracy"
+        )
+
+        st.write(f"Cross-validation accuracy: **{cv_scores.mean() * 100:.2f}%**")
+        st.write(f"Standard deviation: **{cv_scores.std() * 100:.2f}%**")
+
+        pred = best_model.predict(X_test)
+        acc = accuracy_score(y_test, pred)
+
+        st.metric("Test Accuracy", f"{acc * 100:.2f}%")
+
+        st.subheader("📌 Confusion Matrix")
+        cm = confusion_matrix(y_test, pred, labels=best_model.classes_)
+        cm_df = pd.DataFrame(cm, index=best_model.classes_, columns=best_model.classes_)
+        st.dataframe(cm_df, use_container_width=True)
+
+        st.subheader("📋 Classification Report")
+        report = classification_report(y_test, pred, output_dict=True)
+        st.dataframe(pd.DataFrame(report).transpose(), use_container_width=True)
+
+        final_df["ML Predicted Risk"] = best_model.predict(X_processed)
+
+        if hasattr(best_model, "predict_proba"):
+            probs = best_model.predict_proba(X_processed)
+            prob_df = pd.DataFrame(
+                probs,
+                columns=[f"Probability_{label}" for label in best_model.classes_]
             )
-    
-            anomaly_labels = anomaly_model.fit_predict(X_processed)
-    
-            final_df["Anomaly Flag"] = [
-                "Anomaly" if label == -1 else "Normal" for label in anomaly_labels
-            ]
-    
-            anomaly_count = (final_df["Anomaly Flag"] == "Anomaly").sum()
-    
-            st.metric("Detected Anomalies", anomaly_count)
-    
-            st.dataframe(
-                final_df[
-                    [
-                        "institution",
-                        "procurement_category",
-                        "procurement_method",
-                        "amount",
-                        "AI Risk Category",
-                        "ML Predicted Risk",
-                        "Anomaly Flag",
-                    ]
-                ],
-                use_container_width=True
+
+            final_df = pd.concat(
+                [final_df.reset_index(drop=True), prob_df.reset_index(drop=True)],
+                axis=1
             )
-    
-            st.subheader("📈 Feature Importance")
-    
-            encoded_names = preprocessor.named_transformers_["cat"].get_feature_names_out(
-                categorical_features
-            )
-    
-            feature_names = list(encoded_names) + numeric_features
-    
+
+            final_df["Prediction Confidence"] = probs.max(axis=1).round(3)
+
+        st.subheader("🚨 Anomaly Detection")
+
+        anomaly_model = IsolationForest(
+            contamination=0.08,
+            random_state=42
+        )
+
+        anomaly_labels = anomaly_model.fit_predict(X_processed)
+
+        final_df["Anomaly Flag"] = [
+            "Anomaly" if label == -1 else "Normal" for label in anomaly_labels
+        ]
+
+        anomaly_count = (final_df["Anomaly Flag"] == "Anomaly").sum()
+
+        st.metric("Detected Anomalies", anomaly_count)
+
+        st.dataframe(
+            final_df[
+                [
+                    "institution",
+                    "procurement_category",
+                    "procurement_method",
+                    "amount",
+                    "AI Risk Category",
+                    "ML Predicted Risk",
+                    "Anomaly Flag",
+                ]
+            ],
+            use_container_width=True
+        )
+
+        st.subheader("📈 Feature Importance")
+
+        encoded_names = preprocessor.named_transformers_["cat"].get_feature_names_out(
+            categorical_features
+        )
+
+        feature_names = list(encoded_names) + numeric_features
+
+        if hasattr(best_model, "feature_importances_"):
+            importance_df = pd.DataFrame({
+                "Feature": feature_names,
+                "Importance": best_model.feature_importances_
+            }).sort_values("Importance", ascending=False)
+
+            st.bar_chart(importance_df.set_index("Feature").head(10))
+
+        st.subheader("🧠 SHAP Explainability")
+
+        try:
             if hasattr(best_model, "feature_importances_"):
-                importance_df = pd.DataFrame({
-                    "Feature": feature_names,
-                    "Importance": best_model.feature_importances_
-                }).sort_values("Importance", ascending=False)
-    
-                st.bar_chart(importance_df.set_index("Feature").head(10))
-    
-            st.subheader("🧠 SHAP Explainability")
-    
-            try:
-                if hasattr(best_model, "feature_importances_"):
-                    X_sample = X_processed[:100]
-    
-                    if hasattr(X_sample, "toarray"):
-                        X_sample_dense = X_sample.toarray()
-                    else:
-                        X_sample_dense = X_sample
-    
-                    explainer = shap.TreeExplainer(best_model)
-                    shap_values = explainer.shap_values(X_sample_dense)
-    
-                    if isinstance(shap_values, list):
-                        shap_mean = abs(shap_values[0]).mean(axis=0)
-                    else:
-                        shap_mean = abs(shap_values).mean(axis=0)
-    
-                    shap_df = pd.DataFrame({
-                        "Feature": feature_names,
-                        "Mean SHAP Importance": shap_mean
-                    }).sort_values("Mean SHAP Importance", ascending=False)
-    
-                    st.dataframe(shap_df.head(15), use_container_width=True)
-                    st.bar_chart(shap_df.set_index("Feature").head(10))
+                X_sample = X_processed[:100]
+
+                if hasattr(X_sample, "toarray"):
+                    X_sample_dense = X_sample.toarray()
                 else:
-                    st.info("SHAP tree explainability is only available for tree-based models.")
-            except Exception as e:
-                st.warning(f"SHAP explanation could not be generated: {e}")
-    
-            st.subheader("💾 Model Persistence")
-    
-            model_package = {
-                "model": best_model,
-                "preprocessor": preprocessor,
-                "features": ml_features,
-                "classes": list(best_model.classes_),
-            }
-    
-            joblib.dump(model_package, "gppa_saved_ml_pipeline.pkl")
-    
-            model_buffer = io.BytesIO()
-            joblib.dump(model_package, model_buffer)
-            model_buffer.seek(0)
-    
-            st.download_button(
-                "Download Saved ML Pipeline",
-                model_buffer,
-                "gppa_saved_ml_pipeline.pkl",
-                "application/octet-stream"
-            )
-    
-            st.subheader("🧠 ML Prediction Results")
-    
-            ml_cols = [
-                "institution",
-                "procurement_category",
-                "procurement_method",
-                "amount",
-                "AI Risk Category",
-                "ML Predicted Risk",
-                "Prediction Confidence",
-                "Anomaly Flag",
-            ]
-    
-            ml_cols += [c for c in final_df.columns if c.startswith("Probability_")]
-            ml_cols = [c for c in ml_cols if c in final_df.columns]
-    
-            st.dataframe(final_df[ml_cols], use_container_width=True)
-    
-            st.download_button(
-                "Download Advanced ML Prediction Report",
-                final_df.to_csv(index=False),
-                "gppa_advanced_ml_prediction_report.csv",
-                "text/csv"
-            )
+                    X_sample_dense = X_sample
+
+                explainer = shap.TreeExplainer(best_model)
+                shap_values = explainer.shap_values(X_sample_dense)
+
+                if isinstance(shap_values, list):
+                    shap_mean = abs(shap_values[0]).mean(axis=0)
+                else:
+                    shap_mean = abs(shap_values).mean(axis=0)
+
+                shap_df = pd.DataFrame({
+                    "Feature": feature_names,
+                    "Mean SHAP Importance": shap_mean
+                }).sort_values("Mean SHAP Importance", ascending=False)
+
+                st.dataframe(shap_df.head(15), use_container_width=True)
+                st.bar_chart(shap_df.set_index("Feature").head(10))
+            else:
+                st.info("SHAP tree explainability is only available for tree-based models.")
+        except Exception as e:
+            st.warning(f"SHAP explanation could not be generated: {e}")
+
+        st.subheader("💾 Model Persistence")
+
+        model_package = {
+            "model": best_model,
+            "preprocessor": preprocessor,
+            "features": ml_features,
+            "classes": list(best_model.classes_),
+        }
+
+        joblib.dump(model_package, "gppa_saved_ml_pipeline.pkl")
+
+        model_buffer = io.BytesIO()
+        joblib.dump(model_package, model_buffer)
+        model_buffer.seek(0)
+
+        st.download_button(
+            "Download Saved ML Pipeline",
+            model_buffer,
+            "gppa_saved_ml_pipeline.pkl",
+            "application/octet-stream"
+        )
+
+        st.subheader("🧠 ML Prediction Results")
+
+        ml_cols = [
+            "institution",
+            "procurement_category",
+            "procurement_method",
+            "amount",
+            "AI Risk Category",
+            "ML Predicted Risk",
+            "Prediction Confidence",
+            "Anomaly Flag",
+        ]
+
+        ml_cols += [c for c in final_df.columns if c.startswith("Probability_")]
+        ml_cols = [c for c in ml_cols if c in final_df.columns]
+
+        st.dataframe(final_df[ml_cols], use_container_width=True)
+
+        st.download_button(
+            "Download Advanced ML Prediction Report",
+            final_df.to_csv(index=False),
+            "gppa_advanced_ml_prediction_report.csv",
+            "text/csv"
+        )
 
     with tab3:
         st.subheader("🔮 Predict New Procurement Risk")
