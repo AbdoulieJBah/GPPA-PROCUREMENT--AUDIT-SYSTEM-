@@ -221,7 +221,11 @@ if uploaded_file:
     with tab1:
         total = len(final_df)
         high_risk = (final_df["AI Risk Category"] == "High").sum()
-        anomalies = (final_df["Anomaly Flag"] == "Anomaly").sum()
+        
+        if "Anomaly Flag" in final_df.columns:
+            anomalies = (final_df["Anomaly Flag"] == "Anomaly").sum()
+        else:
+            anomalies = 0
         
         st.markdown("### 📊 Executive Summary")
         
@@ -234,14 +238,14 @@ if uploaded_file:
             st.metric(
                 "High Risk Cases",
                 high_risk,
-                f"{(high_risk/total)*100:.1f}%"
+                f"{(high_risk / total) * 100:.1f}%"
             )
         
         with col3:
             st.metric(
                 "Anomalies Detected",
                 anomalies,
-                f"{(anomalies/total)*100:.1f}%"
+                f"{(anomalies / total) * 100:.1f}%"
             )
         st.subheader("📋 Executive Compliance Dashboard")
         st.write(
