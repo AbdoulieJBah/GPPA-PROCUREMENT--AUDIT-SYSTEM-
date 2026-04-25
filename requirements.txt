@@ -7,3 +7,4 @@ openpyxl>=3.1.0
 imbalanced-learn
 joblib
 shap
+reportlab
