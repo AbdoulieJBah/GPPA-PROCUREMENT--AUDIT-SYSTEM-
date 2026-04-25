@@ -8,3 +8,4 @@ imbalanced-learn
 joblib
 shap
 reportlab
+openai
