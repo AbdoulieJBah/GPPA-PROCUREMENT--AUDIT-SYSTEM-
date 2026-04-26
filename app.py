@@ -682,6 +682,7 @@ if uploaded_file:
         {question}
         
         Answer clearly like a professional audit analyst.
+        Keep the answer concise, executive-friendly, and no longer than 8 bullet points unless the user asks for details.
         """
         
             response = gemini_model.generate_content(prompt)
