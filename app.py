@@ -404,933 +404,778 @@ tab1, tab2, tab3 = st.tabs([
 
 
 with tab1:
-     st.markdown("## 📊 GPPA Executive Risk Intelligence Dashboard")
-     st.write(
-            "Designed for GPPA directors, auditors, and decision-makers. "
-            "This section focuses on compliance status, risk exposure, audit priorities, and downloadable reports."
+    st.markdown("## 📊 GPPA Executive Risk Intelligence Dashboard")
+    st.write(
+        "Designed for GPPA directors, auditors, and decision-makers. "
+        "This section focuses on compliance status, risk exposure, audit priorities, and downloadable reports."
+    )
+
+    st.subheader("🔎 Filters")
+
+    col_a, col_b, col_c = st.columns(3)
+
+    with col_a:
+        risk_filter = st.selectbox(
+            "Filter by Risk Category",
+            ["All", "High", "Medium", "Low"]
         )
-    
-        # -----------------------------
-        # FILTERS FIRST
-        # -----------------------------
-     st.subheader("🔎 Filters")
-    
-        col_a, col_b, col_c = st.columns(3)
-    
-        with col_a:
-            risk_filter = st.selectbox(
-                "Filter by Risk Category",
-                ["All", "High", "Medium", "Low"]
+
+    with col_b:
+        category_filter = st.selectbox(
+            "Filter by Procurement Category",
+            ["All"] + sorted(final_df["procurement_category"].dropna().astype(str).unique().tolist())
+        )
+
+    with col_c:
+        search = st.text_input("Search Institution")
+
+    display_df = final_df.copy()
+
+    if risk_filter != "All":
+        display_df = display_df[display_df["AI Risk Category"] == risk_filter]
+
+    if category_filter != "All":
+        display_df = display_df[
+            display_df["procurement_category"].astype(str) == category_filter
+        ]
+
+    if search:
+        display_df = display_df[
+            display_df["institution"].astype(str).str.contains(search, case=False, na=False)
+        ]
+
+    total = len(display_df)
+    high_risk = (display_df["AI Risk Category"] == "High").sum()
+    avg_risk = display_df["AI Risk Score"].mean() if total > 0 else 0
+    avg_compliance = display_df["Compliance Score"].mean() if total > 0 else 0
+
+    anomalies = (
+        (display_df["Anomaly Flag"] == "Anomaly").sum()
+        if "Anomaly Flag" in display_df.columns else 0
+    )
+
+    st.subheader("📌 Executive Summary")
+
+    kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
+
+    with kpi1:
+        st.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-title">Total Procurements</div>
+            <div class="kpi-value">{total}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with kpi2:
+        st.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-title">High Risk Cases</div>
+            <div class="kpi-value">{high_risk}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with kpi3:
+        st.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-title">Anomalies</div>
+            <div class="kpi-value">{anomalies}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with kpi4:
+        st.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-title">Avg Risk Score</div>
+            <div class="kpi-value">{avg_risk:.1f}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with kpi5:
+        st.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-title">Avg Compliance</div>
+            <div class="kpi-value">{avg_compliance:.1f}%</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    if total > 0:
+        high_pct = (high_risk / total) * 100
+        medium_pct = (display_df["AI Risk Category"] == "Medium").mean() * 100
+        highest_risk_inst = (
+            display_df.groupby("institution")["AI Risk Score"]
+            .mean()
+            .sort_values(ascending=False)
+            .index[0]
+        )
+
+        st.subheader("🧠 Key Executive Insights")
+        st.write(f"""
+        - **{high_pct:.1f}%** of the selected procurement records are classified as **High Risk**.
+        - **{medium_pct:.1f}%** of the selected procurement records are classified as **Medium Risk**.
+        - The highest average risk is observed in **{highest_risk_inst}**.
+        - Priority review should focus on missing approvals, low competition, short tender periods, unregistered suppliers, and contract variations.
+        """)
+    else:
+        st.warning("No records match the selected filters.")
+
+    st.divider()
+
+    if total > 0:
+        st.markdown("## 📊 Power BI-Style Risk Dashboard")
+
+        risk_colors = {
+            "High": "#d62728",
+            "Medium": "#ff7f0e",
+            "Low": "#2ca02c"
+        }
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            risk_counts = display_df["AI Risk Category"].value_counts().reset_index()
+            risk_counts.columns = ["Risk Category", "Count"]
+
+            fig_risk = px.pie(
+                risk_counts,
+                names="Risk Category",
+                values="Count",
+                title="Overall Risk Exposure",
+                hole=0.45,
+                color="Risk Category",
+                color_discrete_map=risk_colors
             )
-    
-        with col_b:
-            category_filter = st.selectbox(
-                "Filter by Procurement Category",
-                ["All"] + sorted(final_df["procurement_category"].dropna().astype(str).unique().tolist())
+            fig_risk.update_layout(height=420)
+            st.plotly_chart(fig_risk, use_container_width=True)
+
+        with col2:
+            category_counts = display_df["procurement_category"].value_counts().reset_index()
+            category_counts.columns = ["Procurement Category", "Count"]
+
+            fig_category = px.pie(
+                category_counts,
+                names="Procurement Category",
+                values="Count",
+                title="Procurement Portfolio Breakdown",
+                hole=0.45
             )
-    
-        with col_c:
-            search = st.text_input("Search Institution")
-    
-        display_df = final_df.copy()
-    
-        if risk_filter != "All":
-            display_df = display_df[display_df["AI Risk Category"] == risk_filter]
-    
-        if category_filter != "All":
-            display_df = display_df[
-                display_df["procurement_category"].astype(str) == category_filter
-            ]
-    
-        if search:
-            display_df = display_df[
-                display_df["institution"].astype(str).str.contains(search, case=False, na=False)
-            ]
-    
-        # -----------------------------
-        # KPI CARDS
-        # -----------------------------
-        total = len(display_df)
-        high_risk = (display_df["AI Risk Category"] == "High").sum()
-        avg_risk = display_df["AI Risk Score"].mean() if total > 0 else 0
-        avg_compliance = display_df["Compliance Score"].mean() if total > 0 else 0
-    
-        if "Anomaly Flag" in display_df.columns:
-            anomalies = (display_df["Anomaly Flag"] == "Anomaly").sum()
-        else:
-            anomalies = 0
-    
-     st.subheader("📌 Executive Summary")
-    
-        kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
-    
-        with kpi1:
-            st.markdown(f"""
-            <div class="kpi-card">
-                <div class="kpi-title">Total Procurements</div>
-                <div class="kpi-value">{total}</div>
-            </div>
-            """, unsafe_allow_html=True)
-    
-        with kpi2:
-            st.markdown(f"""
-            <div class="kpi-card">
-                <div class="kpi-title">High Risk Cases</div>
-                <div class="kpi-value">{high_risk}</div>
-            </div>
-            """, unsafe_allow_html=True)
-    
-        with kpi3:
-            st.markdown(f"""
-            <div class="kpi-card">
-                <div class="kpi-title">Anomalies</div>
-                <div class="kpi-value">{anomalies}</div>
-            </div>
-            """, unsafe_allow_html=True)
-    
-        with kpi4:
-            st.markdown(f"""
-            <div class="kpi-card">
-                <div class="kpi-title">Avg Risk Score</div>
-                <div class="kpi-value">{avg_risk:.1f}</div>
-            </div>
-            """, unsafe_allow_html=True)
-    
-        with kpi5:
-            st.markdown(f"""
-            <div class="kpi-card">
-                <div class="kpi-title">Avg Compliance</div>
-                <div class="kpi-value">{avg_compliance:.1f}%</div>
-            </div>
-            """, unsafe_allow_html=True)
-    
-        # -----------------------------
-        # EXECUTIVE TEXT SUMMARY
-        # -----------------------------
-        if total > 0:
-            high_pct = (high_risk / total) * 100
-            medium_pct = (display_df["AI Risk Category"] == "Medium").mean() * 100
-    
-            highest_risk_inst = (
+            fig_category.update_layout(height=420)
+            st.plotly_chart(fig_category, use_container_width=True)
+
+        col3, col4 = st.columns(2)
+
+        with col3:
+            institution_risk = (
                 display_df.groupby("institution")["AI Risk Score"]
                 .mean()
-                .sort_values(ascending=False)
-                .index[0]
+                .reset_index()
+                .sort_values("AI Risk Score", ascending=False)
             )
-    
-     st.subheader("🧠 Key Executive Insights")
-     st.write(f"""
-            - **{high_pct:.1f}%** of the selected procurement records are classified as **High Risk**.
-            - **{medium_pct:.1f}%** of the selected procurement records are classified as **Medium Risk**.
-            - The highest average risk is observed in **{highest_risk_inst}**.
-            - Priority review should focus on missing approvals, low competition, short tender periods, unregistered suppliers, and contract variations.
-            """)
-        else:
-     st.warning("No records match the selected filters.")
-    
-     st.divider()
-    
-        # -----------------------------
-        # BI-STYLE CHARTS
-        # -----------------------------
- if total > 0:
-     st.markdown("## 📊 GPPA Executive Risk Intelligence Dashboard")
-    
-            risk_colors = {
-                "High": "#d62728",
-                "Medium": "#ff7f0e",
-                "Low": "#2ca02c"
-            }
-    
-            col1, col2 = st.columns(2)
-    
-            with col1:
-                risk_counts = display_df["AI Risk Category"].value_counts().reset_index()
-                risk_counts.columns = ["Risk Category", "Count"]
-    
-                fig_risk = px.pie(
-                    risk_counts,
-                    names="Risk Category",
-                    values="Count",
-                    title="Overall Risk Exposure",
-                    hole=0.45,
-                    color="Risk Category",
-                    color_discrete_map=risk_colors
-                )
-                fig_risk.update_layout(height=420)
-                st.plotly_chart(fig_risk, use_container_width=True)
-    
-            with col2:
-                category_counts = display_df["procurement_category"].value_counts().reset_index()
-                category_counts.columns = ["Procurement Category", "Count"]
-    
-                fig_category = px.pie(
-                    category_counts,
-                    names="Procurement Category",
-                    values="Count",
-                    title="Procurement Portfolio Breakdown",
-                    hole=0.45
-                )
-                fig_category.update_layout(height=420)
-                st.plotly_chart(fig_category, use_container_width=True)
-    
-            col3, col4 = st.columns(2)
-    
-            with col3:
-                institution_risk = (
-                    display_df.groupby("institution")["AI Risk Score"]
-                    .mean()
-                    .reset_index()
-                    .sort_values("AI Risk Score", ascending=False)
-                )
-    
-                fig_inst = px.bar(
-                    institution_risk,
-                    x="AI Risk Score",
-                    y="institution",
-                    orientation="h",
-                    title="Average Risk Score by Institution"
-                )
-                fig_inst.update_layout(
-                    height=500,
-                    yaxis={"categoryorder": "total ascending"}
-                )
-                st.plotly_chart(fig_inst, use_container_width=True)
-    
-            with col4:
-                method_risk = (
-                    display_df.groupby("procurement_method")["AI Risk Score"]
-                    .mean()
-                    .reset_index()
-                    .sort_values("AI Risk Score", ascending=False)
-                )
-    
-                fig_method = px.bar(
-                    method_risk,
-                    x="procurement_method",
-                    y="AI Risk Score",
-                    title="Average Risk by Procurement Method"
-                )
-                fig_method.update_layout(height=500)
-                st.plotly_chart(fig_method, use_container_width=True)
-    
-            if "date" in display_df.columns:
-     st.subheader("📈 Risk Trend Over Time")
-    
-                trend_df = display_df.copy()
-                trend_df["date"] = pd.to_datetime(trend_df["date"], errors="coerce")
-    
-                trend_df = (
-                    trend_df.dropna(subset=["date"])
-                    .groupby("date")["AI Risk Score"]
-                    .mean()
-                    .reset_index()
-                    .sort_values("date")
-                )
-    
-                if len(trend_df) > 0:
-                    fig_trend = px.line(
-                        trend_df,
-                        x="date",
-                        y="AI Risk Score",
-                        title="Average Risk Score Trend Over Time",
-                        markers=True
-                    )
-                    st.plotly_chart(fig_trend, use_container_width=True)
-    
-        # -----------------------------
-        # RED FLAGS PANEL
-        # -----------------------------
-     st.subheader("🚨 Auto Red Flags Panel: Top 5 Riskiest Procurements")
-    
-        top5_risk = display_df.sort_values("AI Risk Score", ascending=False).head(5)
-    
-        red_flag_cols = [
-            "institution",
-            "procurement_category",
-            "procurement_method",
-            "amount",
-            "AI Risk Score",
-            "AI Risk Category",
-            "Compliance Flags",
-            "Risk Reasons",
-        ]
-    
-        red_flag_cols = [c for c in red_flag_cols if c in top5_risk.columns]
-    
-        if len(top5_risk) > 0:
-            st.dataframe(top5_risk[red_flag_cols], use_container_width=True)
-        else:
-            st.info("No red flags to display for the selected filters.")
-    
-        # -----------------------------
-        # AUDIT RESULTS TABLE
-        # -----------------------------
-        audit_cols = [
-            "institution",
-            "procurement_category",
-            "procurement_method",
-            "amount",
-            "number_of_quotes",
-            "tender_days",
-            "gppa_approval",
-            "supplier_registered",
-            "monthly_report_submitted",
-            "variation_percentage",
-            "Compliance Score",
-            "AI Risk Score",
-            "AI Risk Category",
-            "Compliance Flags",
-            "Risk Reasons",
-        ]
-    
-        audit_cols = [c for c in audit_cols if c in display_df.columns]
-    
-        st.subheader("🧾 Compliance Audit Results")
-        st.dataframe(display_df[audit_cols], use_container_width=True)
-    
-        with st.expander("🌍 Real-World Impact"):
-            st.write("""
-            This system supports:
-            - Faster public procurement audit reviews
-            - Early detection of risky procurement cases
-            - Improved transparency and accountability
-            - Evidence-based inspection planning
-            - Digital transformation of procurement compliance monitoring
-            """)
 
-        
-         # -----------------------------
-        # 🎯 Explain Selected Procurement 
-        # -----------------------------
-     st.subheader("🎯 Explain Selected Procurement")
-        
-        if len(display_df) > 0:
-            selected_index = st.selectbox(
-                "Select procurement record",
-                display_df.index,
-                format_func=lambda x: f"{x} - {display_df.loc[x, 'institution']} | {display_df.loc[x, 'AI Risk Category']}"
+            fig_inst = px.bar(
+                institution_risk,
+                x="AI Risk Score",
+                y="institution",
+                orientation="h",
+                title="Average Risk Score by Institution"
             )
-        
-            st.dataframe(display_df.loc[[selected_index]], use_container_width=True)
-        
-            # ✅ Risk Badge
-            risk = display_df.loc[selected_index, "AI Risk Category"]
-        
-            if risk == "High":
-                st.markdown("### 🔴 High Risk Procurement")
-            elif risk == "Medium":
-                st.markdown("### 🟠 Medium Risk Procurement")
-            else:
-                st.markdown("### 🟢 Low Risk Procurement")
-        
-            # Divider
-            st.markdown("---")
-        
-            if st.button("Explain this procurement"):
-                selected_row = display_df.loc[selected_index].to_dict()
-        
-                prompt = f"""
-        You are an expert GPPA procurement auditor.
-        
-        Analyze the procurement record below and produce a professional audit explanation.
-        
-        IMPORTANT:
-        - Highlight critical risks using ⚠️ emoji where necessary
-        - Be clear, structured, and concise
-        - Use professional audit language
-        
-        Procurement Data:
-        {selected_row}
-        
-        Provide the explanation in this format:
-        
-        ### 🧠 Overall Assessment
-        
-        ### 1. Why it is Risky or Compliant
-        - Include strengths (if any)
-        - Highlight major risks with ⚠️
-        
-        ### 2. The Most Important Compliance Issues
-        - List key issues ranked by severity
-        - Use ⚠️ for critical violations
-        
-        ### 3. What an Auditor Should Do Next
-        - Provide clear investigation steps
-        
-        ### 4. A Short Recommendation for a GPPA Director
-        - Executive-level recommendation (concise)
-        """
-        
-                with st.spinner("Generating AI audit explanation..."):
-                    try:
-                        response = gemini_model.generate_content(prompt)
-        
-                        st.markdown("### 🧠 AI Audit Explanation")
-        
-                        st.markdown(f"""
-                        <div style="
-                            padding:18px;
-                            border-radius:12px;
-                            background-color:#111827;
-                            border:1px solid #374151;
-                            line-height:1.6;
-                        ">
-                        {response.text}
-                        </div>
-                        """, unsafe_allow_html=True)
-        
-                    except Exception as e:
-                        st.error("❌ AI explanation failed.")
-                        st.exception(e)
-        
-        else:
-            st.info("No procurement records available to explain.")
-                
-        # -----------------------------
-        # 🤖 AI COPILOT
-        # -----------------------------
-        st.subheader("🤖 GPPA AI Audit Copilot")
-        
-        if "copilot_messages" not in st.session_state:
-            st.session_state.copilot_messages = []
-        
-        for msg in st.session_state.copilot_messages:
-            with st.chat_message(msg["role"]):
-                st.markdown(msg["content"])
-        
-        
-        def run_ai_copilot(question, df):
-            sample_data = df.sample(min(30, len(df))).to_dict(orient="records")
-        
-            prompt = f"""You are an expert AI procurement auditor for GPPA.
-        
-        Analyze the procurement dataset and answer questions about:
-        - Compliance risks
-        - High-risk procurements
-        - Audit priorities
-        - Anomalies
-        - Recommendations for GPPA directors
-        
-        Dataset sample:
-        {sample_data}
-        
-        Dataset summary:
-        Total records: {len(df)}
-        High risk cases: {(df["AI Risk Category"] == "High").sum() if "AI Risk Category" in df.columns else 0}
-        Average risk score: {df["AI Risk Score"].mean() if "AI Risk Score" in df.columns else 0:.2f}
-        Average compliance score: {df["Compliance Score"].mean() if "Compliance Score" in df.columns else 0:.2f}
-        
-        User question:
-        {question}
-        
-        Answer clearly like a professional audit analyst.
-        Keep the answer concise, executive-friendly, and no longer than 8 bullet points unless the user asks for details.
-        """
-        
-            response = gemini_model.generate_content(prompt)
-            return response.text
-        
-        
-        user_question = st.chat_input(
-            "Ask the AI copilot about compliance, risk, anomalies, or audit priorities"
+            fig_inst.update_layout(height=500, yaxis={"categoryorder": "total ascending"})
+            st.plotly_chart(fig_inst, use_container_width=True)
+
+        with col4:
+            method_risk = (
+                display_df.groupby("procurement_method")["AI Risk Score"]
+                .mean()
+                .reset_index()
+                .sort_values("AI Risk Score", ascending=False)
+            )
+
+            fig_method = px.bar(
+                method_risk,
+                x="procurement_method",
+                y="AI Risk Score",
+                title="Average Risk by Procurement Method"
+            )
+            fig_method.update_layout(height=500)
+            st.plotly_chart(fig_method, use_container_width=True)
+
+    st.subheader("🚨 Auto Red Flags Panel: Top 5 Riskiest Procurements")
+
+    top5_risk = display_df.sort_values("AI Risk Score", ascending=False).head(5)
+
+    red_flag_cols = [
+        "institution",
+        "procurement_category",
+        "procurement_method",
+        "amount",
+        "AI Risk Score",
+        "AI Risk Category",
+        "Compliance Flags",
+        "Risk Reasons",
+    ]
+
+    red_flag_cols = [c for c in red_flag_cols if c in top5_risk.columns]
+
+    if len(top5_risk) > 0:
+        st.dataframe(top5_risk[red_flag_cols], use_container_width=True)
+    else:
+        st.info("No red flags to display for the selected filters.")
+
+    audit_cols = [
+        "institution",
+        "procurement_category",
+        "procurement_method",
+        "amount",
+        "number_of_quotes",
+        "tender_days",
+        "gppa_approval",
+        "supplier_registered",
+        "monthly_report_submitted",
+        "variation_percentage",
+        "Compliance Score",
+        "AI Risk Score",
+        "AI Risk Category",
+        "Compliance Flags",
+        "Risk Reasons",
+    ]
+
+    audit_cols = [c for c in audit_cols if c in display_df.columns]
+
+    st.subheader("🧾 Compliance Audit Results")
+    st.dataframe(display_df[audit_cols], use_container_width=True)
+
+    with st.expander("🌍 Real-World Impact"):
+        st.write("""
+        This system supports:
+        - Faster public procurement audit reviews
+        - Early detection of risky procurement cases
+        - Improved transparency and accountability
+        - Evidence-based inspection planning
+        - Digital transformation of procurement compliance monitoring
+        """)
+
+    st.subheader("🎯 Explain Selected Procurement")
+
+    if len(display_df) > 0:
+        selected_index = st.selectbox(
+            "Select procurement record",
+            display_df.index,
+            format_func=lambda x: f"{x} - {display_df.loc[x, 'institution']} | {display_df.loc[x, 'AI Risk Category']}"
         )
-        
-        if user_question:
-            st.session_state.copilot_messages.append({
-                "role": "user",
-                "content": user_question
-            })
-        
-            with st.chat_message("user"):
-                st.markdown(user_question)
-        
-            with st.chat_message("assistant"):
-                with st.spinner("Analyzing procurement data..."):
-                    try:
+
+        st.dataframe(display_df.loc[[selected_index]], use_container_width=True)
+
+        risk = display_df.loc[selected_index, "AI Risk Category"]
+
+        if risk == "High":
+            st.markdown("### 🔴 High Risk Procurement")
+        elif risk == "Medium":
+            st.markdown("### 🟠 Medium Risk Procurement")
+        else:
+            st.markdown("### 🟢 Low Risk Procurement")
+
+        st.markdown("---")
+
+        if st.button("Explain this procurement"):
+            selected_row = display_df.loc[selected_index].to_dict()
+
+            prompt = f"""
+You are an expert GPPA procurement auditor.
+
+Analyze the procurement record below and produce a professional audit explanation.
+
+IMPORTANT:
+- Highlight critical risks using ⚠️ emoji where necessary
+- Be clear, structured, and concise
+- Use professional audit language
+- Do NOT exceed 150 words
+
+Procurement Data:
+{selected_row}
+
+Provide:
+- Risk Level
+- Key Issues
+- Auditor Action
+- Recommendation
+"""
+
+            with st.spinner("Generating AI audit explanation..."):
+                try:
+                    if gemini_model is None:
+                        st.warning("Gemini API key is missing. AI explanation is disabled.")
+                    else:
+                        response = gemini_model.generate_content(prompt)
+                        st.markdown("### 🧠 AI Audit Explanation")
+                        st.markdown(response.text)
+                except Exception as e:
+                    st.error(f"AI explanation failed: {e}")
+
+    else:
+        st.info("No procurement records available to explain.")
+
+    st.subheader("🤖 GPPA AI Audit Copilot")
+
+    if "copilot_messages" not in st.session_state:
+        st.session_state.copilot_messages = []
+
+    for msg in st.session_state.copilot_messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+    def run_ai_copilot(question, df):
+        sample_data = df.sample(min(30, len(df))).to_dict(orient="records")
+
+        prompt = f"""
+You are an expert AI procurement auditor for GPPA.
+
+Analyze the procurement dataset and answer questions about:
+- Compliance risks
+- High-risk procurements
+- Audit priorities
+- Anomalies
+- Recommendations for GPPA directors
+
+Dataset sample:
+{sample_data}
+
+Dataset summary:
+Total records: {len(df)}
+High risk cases: {(df["AI Risk Category"] == "High").sum() if "AI Risk Category" in df.columns else 0}
+Average risk score: {df["AI Risk Score"].mean() if "AI Risk Score" in df.columns else 0:.2f}
+Average compliance score: {df["Compliance Score"].mean() if "Compliance Score" in df.columns else 0:.2f}
+
+User question:
+{question}
+
+Answer clearly like a professional audit analyst.
+Keep the answer concise, executive-friendly, and no longer than 8 bullet points unless the user asks for details.
+"""
+
+        response = gemini_model.generate_content(prompt)
+        return response.text
+
+    user_question = st.chat_input(
+        "Ask the AI copilot about compliance, risk, anomalies, or audit priorities"
+    )
+
+    if user_question:
+        st.session_state.copilot_messages.append({
+            "role": "user",
+            "content": user_question
+        })
+
+        with st.chat_message("user"):
+            st.markdown(user_question)
+
+        with st.chat_message("assistant"):
+            with st.spinner("Analyzing procurement data..."):
+                try:
+                    if gemini_model is None:
+                        answer = "Gemini API key is missing. AI Copilot is disabled."
+                        st.warning(answer)
+                    else:
                         answer = run_ai_copilot(user_question, display_df)
                         st.markdown(answer)
-                    except Exception as e:
-                        answer = f"Gemini error: {e}"
-                        st.error(answer)
-        
-            st.session_state.copilot_messages.append({
-                "role": "assistant",
-                "content": answer
-            })
-        
-        
-        # -----------------------------
-        # 📊 AUTO CHARTS FROM QUESTIONS
-        # -----------------------------
-        if user_question:
-            q = user_question.lower()
-        
-            if "risk distribution" in q or "pie chart" in q:
-                chart_df = display_df["AI Risk Category"].value_counts().reset_index()
-                chart_df.columns = ["Risk Category", "Count"]
-        
-                fig = px.pie(
-                    chart_df,
-                    names="Risk Category",
-                    values="Count",
-                    title="Risk Distribution",
-                    hole=0.45
-                )
-                st.plotly_chart(fig, use_container_width=True)
-        
-            elif "institution" in q and "risk" in q:
-                chart_df = (
-                    display_df.groupby("institution")["AI Risk Score"]
-                    .mean()
-                    .reset_index()
-                    .sort_values("AI Risk Score", ascending=False)
-                )
-        
-                fig = px.bar(
-                    chart_df,
-                    x="AI Risk Score",
-                    y="institution",
-                    orientation="h",
-                    title="Average Risk by Institution"
-                )
-                st.plotly_chart(fig, use_container_width=True)
-        
-        
-        # -----------------------------
-        # 📄 AI REPORT
-        # -----------------------------
-        st.subheader("📄 AI-Written Executive Report")
-        
-        if st.button("Generate AI Executive Report"):
-            report_sample = (
-                display_df.sort_values("AI Risk Score", ascending=False)
-                .head(20)
-                .to_dict(orient="records")
+                except Exception as e:
+                    answer = f"Gemini error: {e}"
+                    st.error(answer)
+
+        st.session_state.copilot_messages.append({
+            "role": "assistant",
+            "content": answer
+        })
+
+    if user_question:
+        q = user_question.lower()
+
+        if "risk distribution" in q or "pie chart" in q:
+            chart_df = display_df["AI Risk Category"].value_counts().reset_index()
+            chart_df.columns = ["Risk Category", "Count"]
+
+            fig = px.pie(
+                chart_df,
+                names="Risk Category",
+                values="Count",
+                title="Risk Distribution",
+                hole=0.45
             )
-        
-            report_prompt = f"""You are an expert public procurement audit analyst.
-        
-        Write a concise executive report for GPPA directors based on this procurement data.
-        
-        Include:
-        - Overall risk summary
-        - Key compliance weaknesses
-        - Top audit priorities
-        - Recommended actions
-        - Short conclusion
-        
-        Data sample:
-        {report_sample}
-        """
-        
-            with st.spinner("Writing executive report..."):
-                try:
+            st.plotly_chart(fig, use_container_width=True)
+
+        elif "institution" in q and "risk" in q:
+            chart_df = (
+                display_df.groupby("institution")["AI Risk Score"]
+                .mean()
+                .reset_index()
+                .sort_values("AI Risk Score", ascending=False)
+            )
+
+            fig = px.bar(
+                chart_df,
+                x="AI Risk Score",
+                y="institution",
+                orientation="h",
+                title="Average Risk by Institution"
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+    st.subheader("📄 AI-Written Executive Report")
+
+    if st.button("Generate AI Executive Report"):
+        report_sample = (
+            display_df.sort_values("AI Risk Score", ascending=False)
+            .head(20)
+            .to_dict(orient="records")
+        )
+
+        report_prompt = f"""
+You are an expert public procurement audit analyst.
+
+Write a concise executive report for GPPA directors based on this procurement data.
+
+Include:
+- Overall risk summary
+- Key compliance weaknesses
+- Top audit priorities
+- Recommended actions
+- Short conclusion
+
+Data sample:
+{report_sample}
+"""
+
+        with st.spinner("Writing executive report..."):
+            try:
+                if gemini_model is None:
+                    st.warning("Gemini API key is missing. AI report generation is disabled.")
+                else:
                     report_response = gemini_model.generate_content(report_prompt)
                     report_text = report_response.text
-        
+
                     st.markdown(report_text)
-        
+
                     st.download_button(
                         "Download AI Executive Report",
                         report_text,
                         "gppa_ai_executive_report.txt",
                         "text/plain"
                     )
-                except Exception:
-                    st.warning("AI report generation is temporarily unavailable.")
-                
-            
-    
-        # -----------------------------
-        # DOWNLOADS
-        # -----------------------------
-        st.download_button(
-            "Download Compliance Audit Report",
-            display_df.to_csv(index=False),
-            "gppa_compliance_audit_report.csv",
-            "text/csv"
-        )
-    
-        pdf_buffer = generate_pdf_report(display_df)
-    
-        st.download_button(
-            label="📄 Download Professional PDF Report",
-            data=pdf_buffer,
-            file_name="gppa_procurement_risk_report.pdf",
-            mime="application/pdf"
-        )
+            except Exception as e:
+                st.warning(f"AI report generation failed: {e}")
 
+    st.download_button(
+        "Download Compliance Audit Report",
+        display_df.to_csv(index=False),
+        "gppa_compliance_audit_report.csv",
+        "text/csv"
+    )
+
+    pdf_buffer = generate_pdf_report(display_df)
+
+    st.download_button(
+        label="📄 Download Professional PDF Report",
+        data=pdf_buffer,
+        file_name="gppa_procurement_risk_report.pdf",
+        mime="application/pdf"
+    )
 with tab2:
     st.subheader("🤖 Advanced Machine Learning Training & Testing")
-    
-        ml_features = [
+
+    ml_features = [
+        "procurement_category",
+        "procurement_method",
+        "amount",
+        "number_of_quotes",
+        "tender_days",
+        "gppa_approval",
+        "supplier_registered",
+        "monthly_report_submitted",
+        "variation_percentage",
+    ]
+
+    X = final_df[ml_features]
+    y = final_df["AI Risk Category"]
+
+    st.subheader("📊 Risk Category Distribution Before SMOTE")
+    before = y.value_counts().reset_index()
+    before.columns = ["Risk Category", "Count"]
+    st.dataframe(before, use_container_width=True)
+
+    if y.nunique() < 2:
+        st.warning("At least two risk classes are required to train the ML model.")
+
+    else:
+        categorical_features = [
             "procurement_category",
             "procurement_method",
-            "amount",
-            "number_of_quotes",
-            "tender_days",
             "gppa_approval",
             "supplier_registered",
             "monthly_report_submitted",
+        ]
+
+        numeric_features = [
+            "amount",
+            "number_of_quotes",
+            "tender_days",
             "variation_percentage",
         ]
-    
-        X = final_df[ml_features]
-        y = final_df["AI Risk Category"]
-    
-        st.subheader("📊 Risk Category Distribution Before SMOTE")
-        before = y.value_counts().reset_index()
-        before.columns = ["Risk Category", "Count"]
-        st.dataframe(before, use_container_width=True)
-    
-        if y.nunique() < 2:
-            st.warning("At least two risk classes are required to train the ML model.")
+
+        preprocessor = ColumnTransformer(
+            transformers=[
+                ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
+                ("num", "passthrough", numeric_features),
+            ]
+        )
+
+        X_processed = preprocessor.fit_transform(X)
+
+        min_count = y.value_counts().min()
+
+        if min_count > 1:
+            smote = SMOTE(random_state=42, k_neighbors=min(5, min_count - 1))
+            X_res, y_res = smote.fit_resample(X_processed, y)
+
+            st.subheader("📊 Risk Category Distribution After SMOTE")
+            after = pd.Series(y_res).value_counts().reset_index()
+            after.columns = ["Risk Category", "Count"]
+            st.dataframe(after, use_container_width=True)
+
         else:
-            categorical_features = [
-                "procurement_category",
-                "procurement_method",
-                "gppa_approval",
-                "supplier_registered",
-                "monthly_report_submitted",
-            ]
-    
-            numeric_features = [
-                "amount",
-                "number_of_quotes",
-                "tender_days",
-                "variation_percentage",
-            ]
-    
-            preprocessor = ColumnTransformer(
-                transformers=[
-                    ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
-                    ("num", "passthrough", numeric_features),
-                ]
-            )
-    
-            X_processed = preprocessor.fit_transform(X)
-    
-            min_count = y.value_counts().min()
-    
-            if min_count > 1:
-                smote = SMOTE(random_state=42, k_neighbors=min(5, min_count - 1))
-                X_res, y_res = smote.fit_resample(X_processed, y)
-    
-                st.subheader("📊 Risk Category Distribution After SMOTE")
-                after = pd.Series(y_res).value_counts().reset_index()
-                after.columns = ["Risk Category", "Count"]
-                st.dataframe(after, use_container_width=True)
-            else:
-                st.warning("SMOTE skipped because one class has only one record.")
-                X_res, y_res = X_processed, y
-    
-            X_train, X_test, y_train, y_test = train_test_split(
-                X_res,
-                y_res,
-                test_size=0.25,
-                random_state=42,
-                stratify=y_res if pd.Series(y_res).nunique() > 1 else None
-            )
-    
-            st.subheader("🔧 Hyperparameter Tuning with GridSearchCV")
-    
-            rf_grid = {
-                "n_estimators": [100, 300],
-                "max_depth": [6, 8, None],
-                "min_samples_leaf": [1, 2],
-                "class_weight": ["balanced_subsample"],
-            }
-    
-            grid_search = GridSearchCV(
-                RandomForestClassifier(random_state=42),
-                rf_grid,
-                cv=3,
-                scoring="accuracy",
-                n_jobs=-1
-            )
-    
-            grid_search.fit(X_train, y_train)
-    
-            best_rf = grid_search.best_estimator_
-    
-            st.write("Best Random Forest Parameters:")
-            st.json(grid_search.best_params_)
-    
-            st.subheader("🏆 Model Comparison")
-    
-            models = {
-                "Tuned Random Forest": best_rf,
-                "Gradient Boosting": GradientBoostingClassifier(random_state=42),
-                "Logistic Regression": LogisticRegression(max_iter=1000),
-            }
-    
-            comparison = []
-    
-            for name, model in models.items():
-                model.fit(X_train, y_train)
-                pred = model.predict(X_test)
-                acc = accuracy_score(y_test, pred)
-    
-                comparison.append({
-                    "Model": name,
-                    "Accuracy": round(acc, 4)
-                })
-    
-            comparison_df = pd.DataFrame(comparison).sort_values("Accuracy", ascending=False)
-    
-            st.dataframe(comparison_df, use_container_width=True)
-            st.bar_chart(comparison_df.set_index("Model"))
-    
-            best_model_name = comparison_df.iloc[0]["Model"]
-            best_model = models[best_model_name]
-            best_model.fit(X_train, y_train)
-    
-            st.success(f"Best model selected: {best_model_name}")
-    
-            st.subheader("✅ Cross-Validation Score")
-    
-            cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
-    
-            cv_scores = cross_val_score(
-                best_model,
-                X_res,
-                y_res,
-                cv=cv,
-                scoring="accuracy"
-            )
-    
-            st.write(f"Cross-validation accuracy: **{cv_scores.mean() * 100:.2f}%**")
-            st.write(f"Standard deviation: **{cv_scores.std() * 100:.2f}%**")
-    
-            pred = best_model.predict(X_test)
+            st.warning("SMOTE skipped because one class has only one record.")
+            X_res, y_res = X_processed, y
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            X_res,
+            y_res,
+            test_size=0.25,
+            random_state=42,
+            stratify=y_res if pd.Series(y_res).nunique() > 1 else None
+        )
+
+        st.subheader("🔧 Hyperparameter Tuning")
+
+        rf_grid = {
+            "n_estimators": [100, 300],
+            "max_depth": [6, 8, None],
+            "min_samples_leaf": [1, 2],
+            "class_weight": ["balanced_subsample"],
+        }
+
+        grid_search = GridSearchCV(
+            RandomForestClassifier(random_state=42),
+            rf_grid,
+            cv=3,
+            scoring="accuracy",
+            n_jobs=-1
+        )
+
+        grid_search.fit(X_train, y_train)
+        best_rf = grid_search.best_estimator_
+
+        st.write("Best Random Forest Parameters:")
+        st.json(grid_search.best_params_)
+
+        st.subheader("🏆 Model Comparison")
+
+        models = {
+            "Random Forest": best_rf,
+            "Gradient Boosting": GradientBoostingClassifier(random_state=42),
+            "Logistic Regression": LogisticRegression(max_iter=1000),
+        }
+
+        comparison = []
+
+        for name, model in models.items():
+            model.fit(X_train, y_train)
+            pred = model.predict(X_test)
             acc = accuracy_score(y_test, pred)
-    
-            st.metric("Test Accuracy", f"{acc * 100:.2f}%")
-    
-            st.subheader("📌 Confusion Matrix")
-            cm = confusion_matrix(y_test, pred, labels=best_model.classes_)
-            cm_df = pd.DataFrame(cm, index=best_model.classes_, columns=best_model.classes_)
-            st.dataframe(cm_df, use_container_width=True)
-    
-            st.subheader("📋 Classification Report")
-            report = classification_report(y_test, pred, output_dict=True)
-            st.dataframe(pd.DataFrame(report).transpose(), use_container_width=True)
-    
-            final_df["ML Predicted Risk"] = best_model.predict(X_processed)
-    
-            if hasattr(best_model, "predict_proba"):
-                probs = best_model.predict_proba(X_processed)
-                prob_df = pd.DataFrame(
-                    probs,
-                    columns=[f"Probability_{label}" for label in best_model.classes_]
-                )
-    
-                final_df = pd.concat(
-                    [final_df.reset_index(drop=True), prob_df.reset_index(drop=True)],
-                    axis=1
-                )
-    
-                final_df["Prediction Confidence"] = probs.max(axis=1).round(3)
-    
-            st.subheader("🚨 Anomaly Detection")
-    
-            anomaly_model = IsolationForest(
-                contamination=0.08,
-                random_state=42
-            )
-    
-            anomaly_labels = anomaly_model.fit_predict(X_processed)
-    
-            final_df["Anomaly Flag"] = [
-                "Anomaly" if label == -1 else "Normal" for label in anomaly_labels
-            ]
-    
-            anomaly_count = (final_df["Anomaly Flag"] == "Anomaly").sum()
-    
-            st.metric("Detected Anomalies", anomaly_count)
-    
-            st.dataframe(
-                final_df[
-                    [
-                        "institution",
-                        "procurement_category",
-                        "procurement_method",
-                        "amount",
-                        "AI Risk Category",
-                        "ML Predicted Risk",
-                        "Anomaly Flag",
-                    ]
-                ],
-                use_container_width=True
-            )
-    
-            st.subheader("📈 Feature Importance")
-    
-            encoded_names = preprocessor.named_transformers_["cat"].get_feature_names_out(
-                categorical_features
-            )
-    
-            feature_names = list(encoded_names) + numeric_features
-    
-            if hasattr(best_model, "feature_importances_"):
-                importance_df = pd.DataFrame({
-                    "Feature": feature_names,
-                    "Importance": best_model.feature_importances_
-                }).sort_values("Importance", ascending=False)
-    
-                st.bar_chart(importance_df.set_index("Feature").head(10))
-    
-            st.subheader("💾 Model Persistence")
-    
-            model_package = {
-                "model": best_model,
-                "preprocessor": preprocessor,
-                "features": ml_features,
-                "classes": list(best_model.classes_),
-            }
-    
-            joblib.dump(model_package, "gppa_saved_ml_pipeline.pkl")
-    
-            model_buffer = io.BytesIO()
-            joblib.dump(model_package, model_buffer)
-            model_buffer.seek(0)
-    
-            st.download_button(
-                "Download Saved ML Pipeline",
-                model_buffer,
-                "gppa_saved_ml_pipeline.pkl",
-                "application/octet-stream"
-            )
 
-            st.subheader("🎯 Filter ML Results")
+            comparison.append({
+                "Model": name,
+                "Accuracy": round(acc, 4)
+            })
 
-            risk_filter = st.multiselect(
-                "Select Risk Levels",
-                options=final_df["AI Risk Category"].unique(),
-                default=list(final_df["AI Risk Category"].unique())
-            )
-            
-            anomaly_filter = st.selectbox(
-                "Anomaly Filter",
-                ["All", "Only Anomalies", "Only Normal"]
-            )
-            
-            filtered_df = final_df[final_df["AI Risk Category"].isin(risk_filter)]
-            
-            if "Anomaly Flag" in filtered_df.columns:
-                if anomaly_filter == "Only Anomalies":
-                    filtered_df = filtered_df[filtered_df["Anomaly Flag"] == "Anomaly"]
-                elif anomaly_filter == "Only Normal":
-                    filtered_df = filtered_df[filtered_df["Anomaly Flag"] == "Normal"]
-    
-            st.subheader("🧠 ML Prediction Results")
-    
-            ml_cols = [
+        comparison_df = pd.DataFrame(comparison).sort_values("Accuracy", ascending=False)
+
+        st.dataframe(comparison_df, use_container_width=True)
+        st.bar_chart(comparison_df.set_index("Model"))
+
+        best_model = models[comparison_df.iloc[0]["Model"]]
+        best_model.fit(X_train, y_train)
+
+        st.success(f"Best model: {comparison_df.iloc[0]['Model']}")
+
+        st.subheader("📊 Evaluation")
+
+        pred = best_model.predict(X_test)
+        acc = accuracy_score(y_test, pred)
+
+        st.metric("Test Accuracy", f"{acc * 100:.2f}%")
+
+        st.subheader("📌 Confusion Matrix")
+        cm = confusion_matrix(y_test, pred)
+        st.dataframe(cm)
+
+        st.subheader("📋 Classification Report")
+        report = classification_report(y_test, pred, output_dict=True)
+        st.dataframe(pd.DataFrame(report).transpose())
+
+        # -----------------------------
+        # Anomaly Detection
+        # -----------------------------
+        st.subheader("🚨 Anomaly Detection")
+
+        anomaly_model = IsolationForest(
+            contamination=0.08,
+            random_state=42
+        )
+
+        anomaly_labels = anomaly_model.fit_predict(X_processed)
+
+        final_df["Anomaly Flag"] = [
+            "Anomaly" if label == -1 else "Normal"
+            for label in anomaly_labels
+        ]
+
+        anomaly_count = (final_df["Anomaly Flag"] == "Anomaly").sum()
+        st.metric("Detected Anomalies", anomaly_count)
+
+        st.dataframe(
+            final_df[[
                 "institution",
-                "procurement_category",
                 "procurement_method",
                 "amount",
                 "AI Risk Category",
-                "ML Predicted Risk",
-                "Prediction Confidence",
-                "Anomaly Flag",
-            ]
-    
-            ml_cols += [c for c in final_df.columns if c.startswith("Probability_")]
-            ml_cols = [c for c in ml_cols if c in final_df.columns]
-    
-            st.dataframe(filtered_df[ml_cols], use_container_width=True)
-
-            st.subheader("🔍 Inspect Individual Procurement")
-
-            if len(filtered_df) > 0:
-                selected_index = st.selectbox(
-                    "Select a procurement to inspect",
-                    filtered_df.index,
-                    format_func=lambda x: f"{x} - {filtered_df.loc[x, 'institution']} ({filtered_df.loc[x, 'procurement_method']})"
-                )
-            
-                st.dataframe(filtered_df.loc[[selected_index]], use_container_width=True)
-            else:
-                st.warning("No records match the selected filters.")
-    
-            st.download_button(
-                "Download Advanced ML Prediction Report",
-                final_df.to_csv(index=False),
-                "gppa_advanced_ml_prediction_report.csv",
-                "text/csv"
-            )
+                "Anomaly Flag"
+            ]],
+            use_container_width=True
+        )
 
 with tab3:
     st.subheader("🔮 Predict New Procurement Risk")
     st.write("Use this form to estimate risk for a new procurement case.")
 
-        with st.form("new_procurement_form"):
-            col1, col2 = st.columns(2)
+    with st.form("new_procurement_form"):
 
-            with col1:
-                new_institution = st.text_input("Institution", "Ministry of Health")
-                new_category = st.selectbox("Procurement Category", ["goods", "services", "complex_works"])
-                new_method = st.selectbox("Procurement Method", ["rfq", "open_tender", "restricted", "international_tender", "single_source"])
-                new_amount = st.number_input("Amount", min_value=0.0, value=500000.0)
-                new_quotes = st.number_input("Number of Quotations", min_value=0, value=3)
-                new_tender_days = st.number_input("Tender Days", min_value=0, value=30)
+        col1, col2 = st.columns(2)
 
-            with col2:
-                new_gppa = st.selectbox("GPPA Approval", ["yes", "no"])
-                new_supplier = st.selectbox("Supplier Registered", ["yes", "no"])
-                new_monthly = st.selectbox("Monthly Report Submitted", ["yes", "no"])
-                new_variation = st.number_input("Variation Percentage", min_value=0.0, value=0.0)
-                new_technical = st.selectbox("Technical Proposal Submitted", ["yes", "no"])
-                new_financial = st.selectbox("Financial Proposal Submitted", ["yes", "no"])
-                new_site_visit = st.selectbox("Site Visit Done", ["yes", "no"])
-                new_perf_security = st.selectbox("Performance Security Submitted", ["yes", "no"])
+        with col1:
+            new_institution = st.text_input("Institution", "Ministry of Health")
 
-            submitted = st.form_submit_button("Assess New Procurement Risk")
+            new_category = st.selectbox(
+                "Procurement Category",
+                ["goods", "services", "complex_works"]
+            )
 
-        if submitted:
-            new_row = pd.Series({
-                "institution": new_institution,
-                "procurement_category": new_category,
-                "procurement_method": new_method,
-                "amount": new_amount,
-                "number_of_quotes": new_quotes,
-                "tender_days": new_tender_days,
-                "gppa_approval": new_gppa,
-                "supplier_registered": new_supplier,
-                "monthly_report_submitted": new_monthly,
-                "variation_percentage": new_variation,
-                "technical_proposal": new_technical,
-                "financial_proposal": new_financial,
-                "site_visit_done": new_site_visit,
-                "performance_security": new_perf_security,
-                "tor_attached": new_technical,
-                "technical_director_assigned": "yes",
-                "essential_equipment_available": "yes",
-                "bid_security_required": "no",
-                "bid_security_submitted": "no",
-                "inspection_certificate_required": "no",
-                "inspection_certificate_submitted": "no"
-            })
+            new_method = st.selectbox(
+                "Procurement Method",
+                ["rfq", "open_tender", "restricted", "international_tender", "single_source"]
+            )
 
-            comp_score, comp_risk, flags = check_compliance(new_row)
-            risk_score, reasons = ai_risk_score(new_row, comp_risk)
+            new_amount = st.number_input("Amount", min_value=0.0, value=500000.0)
 
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Compliance Score", f"{comp_score:.2f}%")
-            col2.metric("AI Risk Score", f"{risk_score:.2f}")
-            col3.metric("Risk Category", risk_category(risk_score))
+            new_quotes = st.number_input("Number of Quotations", min_value=0, value=3)
 
-            st.write("Compliance Flags:", "; ".join(flags) if flags else "Compliant")
-            st.write("Risk Reasons:", "; ".join(reasons) if reasons else "Low risk")
+            new_tender_days = st.number_input("Tender Days", min_value=0, value=30)
 
+        with col2:
+            new_gppa = st.selectbox("GPPA Approval", ["yes", "no"])
 
+            new_supplier = st.selectbox("Supplier Registered", ["yes", "no"])
 
-    
-   
-else:
-    st.info("Upload a CSV or Excel file to begin.")
+            new_monthly = st.selectbox("Monthly Report Submitted", ["yes", "no"])
+
+            new_variation = st.number_input("Variation Percentage", min_value=0.0, value=0.0)
+
+            new_technical = st.selectbox("Technical Proposal Submitted", ["yes", "no"])
+
+            new_financial = st.selectbox("Financial Proposal Submitted", ["yes", "no"])
+
+            new_site_visit = st.selectbox("Site Visit Done", ["yes", "no"])
+
+            new_perf_security = st.selectbox("Performance Security Submitted", ["yes", "no"])
+
+        submitted = st.form_submit_button("Assess New Procurement Risk")
+
+    # -----------------------------
+    # RESULT OUTPUT
+    # -----------------------------
+    if submitted:
+
+        new_row = pd.Series({
+            "institution": new_institution,
+            "procurement_category": new_category,
+            "procurement_method": new_method,
+            "amount": new_amount,
+            "number_of_quotes": new_quotes,
+            "tender_days": new_tender_days,
+            "gppa_approval": new_gppa,
+            "supplier_registered": new_supplier,
+            "monthly_report_submitted": new_monthly,
+            "variation_percentage": new_variation,
+            "technical_proposal": new_technical,
+            "financial_proposal": new_financial,
+            "site_visit_done": new_site_visit,
+            "performance_security": new_perf_security,
+            "tor_attached": new_technical,
+            "technical_director_assigned": "yes",
+            "essential_equipment_available": "yes",
+            "bid_security_required": "no",
+            "bid_security_submitted": "no",
+            "inspection_certificate_required": "no",
+            "inspection_certificate_submitted": "no"
+        })
+
+        comp_score, comp_risk, flags = check_compliance(new_row)
+        risk_score, reasons = ai_risk_score(new_row, comp_risk)
+
+        st.markdown("## 📊 Risk Assessment Result")
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.metric("Compliance Score", f"{comp_score:.2f}%")
+
+        with col2:
+            st.metric("AI Risk Score", f"{risk_score:.2f}")
+
+        with col3:
+            category = risk_category(risk_score)
+
+            if category == "High":
+                st.metric("Risk Category", "🔴 High")
+            elif category == "Medium":
+                st.metric("Risk Category", "🟠 Medium")
+            else:
+                st.metric("Risk Category", "🟢 Low")
+
+        st.markdown("---")
+
+        st.subheader("⚠️ Compliance Issues")
+
+        if flags:
+            for f in flags:
+                st.markdown(f"- ⚠️ {f}")
+        else:
+            st.success("No compliance issues detected.")
+
+        st.subheader("🚨 Risk Drivers")
+
+        if reasons:
+            for r in reasons:
+                st.markdown(f"- ⚠️ {r}")
+        else:
+            st.success("Low risk procurement.")
+
+        st.markdown("---")
+
+        st.subheader("🧠 AI Insight")
+
+        if risk_score >= 70:
+            st.error("⚠️ High-risk procurement — immediate audit recommended.")
+        elif risk_score >= 40:
+            st.warning("⚠️ Medium risk — review recommended.")
+        else:
+            st.success("Low risk — standard monitoring sufficient.")
 
 # ---------------- FOOTER ----------------
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
