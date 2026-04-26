@@ -19,6 +19,7 @@ from reportlab.lib.units import inch
 import plotly.express as px
 import sqlite3
 from datetime import datetime
+import streamlit.components.v1 as components
 import google.generativeai as genai
 
 gemini_model = None
@@ -44,19 +45,18 @@ if "page" not in st.session_state:
 
 if st.session_state.page == "landing":
 
-    # ---------------- CSS ----------------
-    st.markdown("""
+    # ---------------- HERO SECTION ----------------
+    components.html("""
     <style>
-    
     .hero {
         padding: 55px 25px;
         border-radius: 24px;
         background: linear-gradient(135deg, #0f172a, #1e3a8a);
         text-align: center;
-        margin-bottom: 30px;
+        margin-bottom: 20px;
         box-shadow: 0px 10px 30px rgba(0,0,0,0.35);
+        font-family: sans-serif;
     }
-    
     .hero-badge {
         display: inline-block;
         padding: 6px 14px;
@@ -66,78 +66,41 @@ if st.session_state.page == "landing":
         color: #93c5fd;
         margin-bottom: 12px;
     }
-    
     .hero-title {
         font-size: 44px;
         font-weight: 800;
         color: white;
         line-height: 1.2;
-        word-break: keep-all;
     }
-    
     .hero-subtitle {
         font-size: 18px;
         color: #cbd5e1;
         margin-top: 12px;
         line-height: 1.6;
     }
-    
     .hero-desc {
         font-size: 15px;
         color: #93c5fd;
         margin-top: 10px;
     }
-    
-    /* Mobile Fix */
     @media (max-width: 768px) {
         .hero-title {
             font-size: 28px;
         }
     }
-    
-    .feature-card {
-        padding: 20px;
-        border-radius: 15px;
-        background: #111827;
-        border: 1px solid #374151;
-        height: 140px;
-    }
-    
-    .feature-title {
-        font-size: 18px;
-        font-weight: 700;
-        color: #60a5fa;
-        margin-bottom: 8px;
-    }
-    
-    .feature-text {
-        font-size: 14px;
-        color: #d1d5db;
-    }
-    
     </style>
-    """, unsafe_allow_html=True)
     
-    
-    # ---------------- HERO SECTION ----------------
-    st.markdown("""<div class="hero">
-    
-    <div class="hero-badge">🚀 AI-Powered GovTech Platform</div>
-    
-    <div class="hero-title">
-    AI-Powered Procurement Risk System
+    <div class="hero">
+        <div class="hero-badge">🚀 AI-Powered GovTech Platform</div>
+        <div class="hero-title">AI-Powered Procurement Risk System</div>
+        <div class="hero-subtitle">
+            Detect compliance violations, high-risk procurements, audit priorities, and anomalies using AI.
+        </div>
+        <div class="hero-desc">
+            Built for public procurement authorities, auditors, compliance teams, and data-driven governance.
+        </div>
     </div>
-    
-    <div class="hero-subtitle">
-    Detect compliance violations, high-risk procurements, audit priorities, and anomalies using AI.
-    </div>
-    
-    <div class="hero-desc">
-    Built for public procurement authorities, auditors, compliance teams, and data-driven governance.
-    </div>
-    
-    </div>
-    """, unsafe_allow_html=True)
+    """, height=330)
     
     
     # ---------------- KPI METRICS ----------------
