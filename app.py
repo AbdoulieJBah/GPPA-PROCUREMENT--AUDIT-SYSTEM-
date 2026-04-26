@@ -774,21 +774,18 @@ Provide:
 
             with st.spinner("Generating AI audit explanation..."):
                 try:
-                    if gemini_model is None:
-                        st.warning("Gemini API key is missing. AI explanation is disabled.")
+                   if gemini_model is None:
+                        st.warning("AI features are disabled (missing API key).")
                     else:
-                        if gemini_model is None:
-                            st.warning("AI features are disabled (missing API key).")
+                        try:
+                            response = gemini_model.generate_content(prompt)
+                            st.markdown(response.text)
+                        except Exception as e:
+                            st.error(f"⚠️ AI error: {e}")
+                                                            
+                    
                         else:
-                            try:
-                                response = gemini_model.generate_content(prompt)
-                                st.markdown(response.text)
-                            except Exception as e:
-                                st.error(f"⚠️ AI error: {e}")
-                                        
-
-    else:
-        st.info("No procurement records available to explain.")
+                            st.info("No procurement records available to explain.")
 
     st.subheader("🤖 GPPA AI Audit Copilot")
 
