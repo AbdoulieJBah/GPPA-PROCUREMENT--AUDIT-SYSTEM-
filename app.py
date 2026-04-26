@@ -95,7 +95,7 @@ Public procurement auditing, compliance monitoring, and fraud risk detection
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# 🔗 LINKS (IMPORTANT FOR RECRUITERS)
+# 🔗 LINKS 
 # -----------------------------
 st.sidebar.markdown("### 🔗 Connect")
 
@@ -106,7 +106,7 @@ st.sidebar.markdown("""
     </button>
 </a>
 
-<a href="https://github.com/AbdoulieJBah/ai-business-intelligence-dashboard" target="_blank">
+<a href="https://https://github.com/AbdoulieJBah/GPPA-PROCUREMENT--AUDIT-SYSTEM-/tree/main" target="_blank">
     <button style="width:100%; padding:8px; margin-bottom:6px; border-radius:8px; background:#1f2937; color:white; border:none; font-weight:600;">
         💻 GitHub
     </button>
@@ -1288,7 +1288,7 @@ AI Engineer • Data Scientist • Business Intelligence Developer
 
 <a href="https://www.linkedin.com/in/abdoulie-j-bah-b71263244" target="_blank" style="text-decoration:none; padding:8px 14px; border-radius:10px; background:#0ea5e9; color:white; font-weight:600;">LinkedIn</a>
 
-<a href="https://github.com/AbdoulieJBah/ai-business-intelligence-dashboard" target="_blank" style="text-decoration:none; padding:8px 14px; border-radius:10px; background:#1f2937; color:white; font-weight:600; border:1px solid rgba(255,255,255,0.1);">GitHub</a>
+<a href="https://https://github.com/AbdoulieJBah/GPPA-PROCUREMENT--AUDIT-SYSTEM-/tree/main" target="_blank" style="text-decoration:none; padding:8px 14px; border-radius:10px; background:#1f2937; color:white; font-weight:600; border:1px solid rgba(255,255,255,0.1);">GitHub</a>
 
 <a href="mailto:21722285bah@gmail.com" style="text-decoration:none; padding:8px 14px; border-radius:10px; background:#2563eb; color:white; font-weight:600;">Contact</a>
 
