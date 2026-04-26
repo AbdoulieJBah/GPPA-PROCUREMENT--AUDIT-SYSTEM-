@@ -132,14 +132,24 @@ uploaded_file = st.file_uploader(
 )
 
 if uploaded_file is not None:
-    if uploaded_file.name.endswith(".csv"):
-        df = pd.read_csv(uploaded_file)
-    else:
-        df = pd.read_excel(uploaded_file)
+    uploaded_file.seek(0)
 
-    save_uploaded_dataset(df, uploaded_file.name)
-    st.success("✅ Uploaded dataset saved permanently to database")
+    try:
+        if uploaded_file.name.endswith(".csv"):
+            df = pd.read_csv(uploaded_file)
+        else:
+            df = pd.read_excel(uploaded_file)
 
+        if df.empty:
+            st.warning("⚠️ Uploaded file is empty. Please upload a valid dataset.")
+            st.stop()
+
+        save_uploaded_dataset(df, uploaded_file.name)
+        st.success("✅ Uploaded dataset saved permanently to database")
+
+    except pd.errors.EmptyDataError:
+        st.warning("⚠️ Uploaded CSV file is empty. Please upload a valid CSV file.")
+        st.stop()
 else:
     saved_df, saved_name, saved_date = load_latest_dataset()
 
