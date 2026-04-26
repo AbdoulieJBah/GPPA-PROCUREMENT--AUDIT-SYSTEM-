@@ -778,15 +778,15 @@ Provide:
                         st.warning("Gemini API key is missing. AI explanation is disabled.")
                     else:
                         if gemini_model is None:
-    st.warning("AI features are disabled (missing API key).")
-else:
-    try:
-        response = gemini_model.generate_content(prompt)
-        st.markdown(response.text)
-    except Exception as e:
-        st.error(f"⚠️ AI error: {e}")
-                except Exception as e:
-                    st.error(f"AI explanation failed: {e}")
+                            st.warning("AI features are disabled (missing API key).")
+                        else:
+                            try:
+                                response = gemini_model.generate_content(prompt)
+                                st.markdown(response.text)
+                            except Exception as e:
+                                st.error(f"⚠️ AI error: {e}")
+                                        except Exception as e:
+                                            st.error(f"AI explanation failed: {e}")
 
     else:
         st.info("No procurement records available to explain.")
