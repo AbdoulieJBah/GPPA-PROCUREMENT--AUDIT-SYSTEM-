@@ -104,16 +104,6 @@ if st.session_state.page == "landing":
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("""
-    ### 🏛️ Designed For
-    
-    - 🏛️ Government Procurement Authorities  
-    - 🛡️ Anti-Corruption Agencies  
-    - 📊 Internal Audit Units  
-    - 🌍 World Bank / Donor-Funded Projects  
-    - 📈 Compliance & Risk Teams  
-    
-    """)
 
     st.markdown("""
     <div class="hero">
@@ -206,6 +196,17 @@ if st.session_state.page == "landing":
         """, unsafe_allow_html=True)
 
     st.markdown("---")
+
+    st.markdown("""
+    ### 🏛️ Designed For
+    
+    - 🏛️ Government Procurement Authorities  
+    - 🛡️ Anti-Corruption Agencies  
+    - 📊 Internal Audit Units  
+    - 🌍 World Bank / Donor-Funded Projects  
+    - 📈 Compliance & Risk Teams  
+    
+    """)
 
     st.markdown("""
     ### 🎯 What This System Does
