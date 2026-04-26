@@ -44,19 +44,31 @@ if "page" not in st.session_state:
 
 if st.session_state.page == "landing":
 
+    # ---------------- CSS ----------------
     st.markdown("""
     <style>
     
     .hero {
-        padding: 50px 20px;
-        border-radius: 20px;
+        padding: 55px 25px;
+        border-radius: 24px;
         background: linear-gradient(135deg, #0f172a, #1e3a8a);
         text-align: center;
         margin-bottom: 30px;
+        box-shadow: 0px 10px 30px rgba(0,0,0,0.35);
+    }
+    
+    .hero-badge {
+        display: inline-block;
+        padding: 6px 14px;
+        font-size: 13px;
+        border-radius: 20px;
+        background: rgba(255,255,255,0.1);
+        color: #93c5fd;
+        margin-bottom: 12px;
     }
     
     .hero-title {
-        font-size: 42px;
+        font-size: 44px;
         font-weight: 800;
         color: white;
         line-height: 1.2;
@@ -105,29 +117,30 @@ if st.session_state.page == "landing":
     
     </style>
     """, unsafe_allow_html=True)
-
-
+    
+    
     # ---------------- HERO SECTION ----------------
-    st.markdown(
-        """
-        <div class="hero">
-            <div class="hero-badge">🚀 AI-Powered GovTech Platform</div>
+    st.markdown("""
+    <div class="hero">
     
-            <div class="hero-title">
-                AI-Powered Procurement Risk System
-            </div>
-    
-            <div class="hero-subtitle">
-                Detect compliance violations, high-risk procurements, audit priorities, and anomalies using AI.
-            </div>
-    
-            <div class="hero-desc">
-                Built for public procurement authorities, auditors, compliance teams, and data-driven governance.
-            </div>
+        <div class="hero-badge">
+            🚀 AI-Powered GovTech Platform
         </div>
-        """,
-        unsafe_allow_html=True
-    )
+    
+        <div class="hero-title">
+            AI-Powered Procurement Risk System
+        </div>
+    
+        <div class="hero-subtitle">
+            Detect compliance violations, high-risk procurements, audit priorities, and anomalies using AI.
+        </div>
+    
+        <div class="hero-desc">
+            Built for public procurement authorities, auditors, compliance teams, and data-driven governance.
+        </div>
+    
+    </div>
+    """, unsafe_allow_html=True)
     
     
     # ---------------- KPI METRICS ----------------
@@ -170,7 +183,6 @@ if st.session_state.page == "landing":
             </div>
         </div>
         """, unsafe_allow_html=True)
-
     st.markdown("""
     ### 🏛️ Designed For
     
