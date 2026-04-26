@@ -64,10 +64,10 @@ st.markdown("""
 st.title("AI-Powered GPPA Procurement Compliance & Risk System")
 st.write(
     "Advanced GovTech prototype combining GPPA compliance rules, AI-style risk scoring, "
-    "SMOTE class balancing, model comparison, prediction confidence, and executive audit reporting."
+    "SMOTE class balancing, model comparison, prediction confidence, and executive audit reporting.")
 st.markdown("**🚀 Real-time AI system for detecting procurement risk, compliance violations, and audit priorities.**")
 
-)
+
 
 # -----------------------------
 # 🚀 SIDEBAR (PROFESSIONAL UI)
