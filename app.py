@@ -23,6 +23,10 @@ import google.generativeai as genai
 
 gemini_model = None
 
+@st.cache_data
+def load_data_cached(df):
+    return df
+
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     gemini_model = genai.GenerativeModel("gemini-2.5-flash")
