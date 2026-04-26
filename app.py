@@ -913,58 +913,53 @@ with tab1:
             .head(20)
             .to_dict(orient="records")
         )
-
+    
         report_prompt = f"""
-You are an expert public procurement audit analyst.
-
-Write a concise executive report for GPPA directors based on this procurement data.
-
-Include:
-- Overall risk summary
-- Key compliance weaknesses
-- Top audit priorities
-- Recommended actions
-- Short conclusion
-
-Data sample:
-{report_sample}
-"""
-
+    You are an expert public procurement audit analyst.
+    
+    Write a concise executive report for GPPA directors based on this procurement data.
+    
+    Include:
+    - Overall risk summary
+    - Key compliance weaknesses
+    - Top audit priorities
+    - Recommended actions
+    - Short conclusion
+    
+    Data sample:
+    {report_sample}
+    """
+    
         with st.spinner("Writing executive report..."):
-            try:
-                if gemini_model is None:
-                    st.warning("Gemini API key is missing. AI report generation is disabled.")
-                else:
-                    if gemini_model is None:
-    st.warning("AI report generation is disabled.")
-else:
-    try:
-        report_response = gemini_model.generate_content(report_prompt)
-        report_text = report_response.text
-        st.markdown(report_text)
-    except Exception as e:
-        st.error(f"⚠️ AI error: {e}")
-
+            if gemini_model is None:
+                st.warning("⚠️ AI report generation is disabled because Gemini API key is missing.")
+            else:
+                try:
+                    report_response = gemini_model.generate_content(report_prompt)
+                    report_text = report_response.text
+    
                     st.markdown(report_text)
-
+    
                     st.download_button(
                         "Download AI Executive Report",
                         report_text,
                         "gppa_ai_executive_report.txt",
                         "text/plain"
                     )
-            except Exception as e:
-                st.warning(f"AI report generation failed: {e}")
-
+    
+                except Exception as e:
+                    st.error(f"⚠️ AI report generation failed: {e}")
+    
+    
     st.download_button(
         "Download Compliance Audit Report",
         display_df.to_csv(index=False),
         "gppa_compliance_audit_report.csv",
         "text/csv"
     )
-
+    
     pdf_buffer = generate_pdf_report(display_df)
-
+    
     st.download_button(
         label="📄 Download Professional PDF Report",
         data=pdf_buffer,
