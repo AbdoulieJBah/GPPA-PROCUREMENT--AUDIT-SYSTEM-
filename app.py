@@ -240,6 +240,17 @@ if st.session_state.page == "landing":
         </div>
         </div>
         """, unsafe_allow_html=True)
+
+if st.session_state.page == "landing":
+    # landing page code
+
+    if st.button("🚀 Launch Audit Dashboard"):
+        st.session_state.page = "dashboard"
+        st.rerun()
+
+    # STOP ONLY AFTER EVERYTHING IS RENDERED
+    st.stop()
+        
         
 
 
