@@ -20,7 +20,7 @@ import plotly.express as px
 from openai import OpenAI
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-st.write("OpenAI key loaded:", "OPENAI_API_KEY" in st.secrets)
+
 
 st.set_page_config(
     page_title="GPPA Advanced AI Procurement Risk System",
@@ -672,7 +672,7 @@ if uploaded_file:
         """
         
             response = client.responses.create(
-                model="gpt-5.5",
+                model="gpt-4o-mini"",
                 input=[
                     {
                         "role": "system",
