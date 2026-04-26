@@ -23,7 +23,7 @@ gemini_model = None
 
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    gemini_model = genai.GenerativeModel("gemini-pro")
+    gemini_model = genai.GenerativeModel("gemini-1.5-flash")
 else:
     st.warning("Gemini API key is missing. AI Copilot features are disabled.")
 st.set_page_config(
@@ -706,9 +706,9 @@ if uploaded_file:
                     try:
                         answer = run_ai_copilot(user_question, display_df)
                         st.markdown(answer)
-                    except Exception:
-                        answer = "AI Copilot is temporarily unavailable."
-                        st.warning(answer)
+                    except Exception as e:
+                        answer = f"Gemini error: {e}"
+                        st.error(answer)
         
             st.session_state.copilot_messages.append({
                 "role": "assistant",
