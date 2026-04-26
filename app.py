@@ -121,7 +121,7 @@ def load_latest_dataset():
     if result.empty:
         return None, None, None
 
-    df = pd.read_json(result.loc[0, "data"])
+    df = pd.read_json(io.StringIO(result.loc[0, "data"]))
     return df, result.loc[0, "upload_name"], result.loc[0, "upload_date"]
 
 init_database()
