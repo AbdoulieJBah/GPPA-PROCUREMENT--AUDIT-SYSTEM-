@@ -19,7 +19,6 @@ from reportlab.lib.units import inch
 import plotly.express as px
 import sqlite3
 from datetime import datetime
-import streamlit.components.v1 as components
 import google.generativeai as genai
 
 gemini_model = None
@@ -45,15 +44,15 @@ if "page" not in st.session_state:
 
 if st.session_state.page == "landing":
 
-    # ---------------- CSS ----------------
+    # ---------------- LANDING PAGE CSS ----------------
     st.markdown("""
     <style>
     .hero {
-        padding: 45px 25px;
-        border-radius: 24px;
+        padding: 32px 18px;
+        border-radius: 22px;
         background: linear-gradient(135deg, #0f172a, #1e3a8a);
         text-align: center;
-        margin-bottom: 25px;
+        margin-bottom: 22px;
         box-shadow: 0px 10px 30px rgba(0,0,0,0.35);
     }
     
@@ -62,104 +61,114 @@ if st.session_state.page == "landing":
         padding: 6px 14px;
         font-size: 13px;
         border-radius: 20px;
-        background: rgba(255,255,255,0.1);
-        color: #93c5fd;
-        margin-bottom: 12px;
+        background: rgba(255,255,255,0.12);
+        color: #bfdbfe;
+        margin-bottom: 14px;
     }
     
     .hero-title {
-        font-size: 42px;
+        font-size: 40px;
         font-weight: 800;
         color: white;
         line-height: 1.15;
     }
     
     .hero-subtitle {
-        font-size: 18px;
-        color: #cbd5e1;
+        font-size: 17px;
+        color: #dbeafe;
         margin-top: 14px;
         line-height: 1.5;
     }
     
     .hero-desc {
-        font-size: 15px;
+        font-size: 14px;
         color: #93c5fd;
         margin-top: 12px;
     }
     
-    /* Mobile optimization */
+    .kpi-box {
+        padding: 16px;
+        border-radius: 16px;
+        background: #111827;
+        border: 1px solid #374151;
+        margin-bottom: 12px;
+    }
+    
+    .kpi-label {
+        color: #cbd5e1;
+        font-size: 14px;
+    }
+    
+    .kpi-value {
+        color: white;
+        font-size: 28px;
+        font-weight: 800;
+    }
+    
+    .kpi-tag {
+        color: #86efac;
+        font-size: 13px;
+    }
+    
+    /* Mobile */
     @media (max-width: 768px) {
         .hero {
-            padding: 28px 16px;
+            padding: 26px 14px;
             border-radius: 18px;
-            margin-bottom: 18px;
-        }
-    
-        .hero-badge {
-            font-size: 12px;
-            padding: 5px 10px;
-            margin-bottom: 10px;
         }
     
         .hero-title {
-            font-size: 28px;
-            line-height: 1.2;
+            font-size: 26px;
         }
     
         .hero-subtitle {
-            font-size: 15px;
-            line-height: 1.45;
+            font-size: 14px;
         }
     
         .hero-desc {
-            font-size: 13px;
-            line-height: 1.4;
+            font-size: 12px;
         }
     
-        div[data-testid="stMetric"] {
-            padding: 8px 0;
-        }
-    
-        div[data-testid="stMetricValue"] {
-            font-size: 28px;
-        }
-    
-        div[data-testid="stMetricLabel"] {
-            font-size: 14px;
+        .kpi-value {
+            font-size: 24px;
         }
     }
     </style>
     """, unsafe_allow_html=True)
     
     
-    # ---------------- HERO SECTION ----------------
-    components.html("""
-    <div class="hero">
-        <div class="hero-badge">🚀 AI-Powered GovTech Platform</div>
-        <div class="hero-title">AI-Powered Procurement Risk System</div>
-        <div class="hero-subtitle">
-            Detect compliance violations, high-risk procurements, audit priorities, and anomalies using AI.
-        </div>
-        <div class="hero-desc">
-            Built for procurement authorities, auditors, compliance teams, and data-driven governance.
-        </div>
-    </div>
-    """, height=280)
+    # ---------------- HERO ----------------
+    st.markdown("""<div class="hero">
+    <div class="hero-badge">🚀 AI-Powered GovTech Platform</div>
+    <div class="hero-title">AI-Powered Procurement Risk System</div>
+    <div class="hero-subtitle">Detect compliance violations, high-risk procurements, audit priorities, and anomalies using AI.</div>
+    <div class="hero-desc">Built for procurement authorities, auditors, compliance teams, and data-driven governance.</div>
+    </div>""", unsafe_allow_html=True)
     
     
-    # ---------------- KPI METRICS ----------------
-    st.markdown("### Platform Highlights")
-    
+    # ---------------- KPI CARDS ----------------
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.metric("⚠️ Risk Detection", "95%+", "High accuracy")
+        st.markdown("""<div class="kpi-box">
+    <div class="kpi-label">⚠️ Risk Detection</div>
+    <div class="kpi-value">95%+</div>
+    <div class="kpi-tag">↑ High accuracy</div>
+    </div>""", unsafe_allow_html=True)
     
     with col2:
-        st.metric("📊 Coverage", "Cross-sector", "Gov-wide")
+        st.markdown("""<div class="kpi-box">
+    <div class="kpi-label">📊 Coverage</div>
+    <div class="kpi-value">Cross-sector</div>
+    <div class="kpi-tag">↑ Gov-wide</div>
+    </div>""", unsafe_allow_html=True)
     
     with col3:
-        st.metric("🤖 AI Insights", "Real-time", "Explainable")
+        st.markdown("""<div class="kpi-box">
+    <div class="kpi-label">🤖 AI Insights</div>
+    <div class="kpi-value">Real-time</div>
+    <div class="kpi-tag">↑ Explainable</div>
+    </div>""", unsafe_allow_html=True)
     
     
     # ---------------- FEATURE CARDS ----------------
