@@ -63,33 +63,6 @@ st.write(
     "SMOTE class balancing, model comparison, prediction confidence, and executive audit reporting."
 )
 
-uploaded_file = st.file_uploader(
-    "Upload procurement data file",
-    type=["csv", "xlsx"]
-)
-
-if uploaded_file is not None:
-    if uploaded_file.name.endswith(".csv"):
-        df = pd.read_csv(uploaded_file)
-    else:
-        df = pd.read_excel(uploaded_file)
-
-    save_uploaded_dataset(df, uploaded_file.name)
-    st.success("✅ Uploaded dataset saved permanently to database")
-
-else:
-    saved_df, saved_name, saved_date = load_latest_dataset()
-
-    if saved_df is not None:
-        df = saved_df
-        st.info(f"ℹ️ Using saved dataset: {saved_name} uploaded on {saved_date}")
-    else:
-        try:
-            df = pd.read_csv("gppa_large_dataset.csv")
-            st.info("ℹ️ No saved upload found — using default sample dataset")
-        except FileNotFoundError:
-            st.warning("⚠️ No dataset available. Please upload a file.")
-            st.stop()
 
 DB_PATH = "gppa_procurement_data.db"
 
@@ -152,6 +125,36 @@ def load_latest_dataset():
     return df, result.loc[0, "upload_name"], result.loc[0, "upload_date"]
 
 init_database()
+
+uploaded_file = st.file_uploader(
+    "Upload procurement data file",
+    type=["csv", "xlsx"]
+)
+
+if uploaded_file is not None:
+    if uploaded_file.name.endswith(".csv"):
+        df = pd.read_csv(uploaded_file)
+    else:
+        df = pd.read_excel(uploaded_file)
+
+    save_uploaded_dataset(df, uploaded_file.name)
+    st.success("✅ Uploaded dataset saved permanently to database")
+
+else:
+    saved_df, saved_name, saved_date = load_latest_dataset()
+
+    if saved_df is not None:
+        df = saved_df
+        st.info(f"ℹ️ Using saved dataset: {saved_name} uploaded on {saved_date}")
+    else:
+        try:
+            df = pd.read_csv("gppa_large_dataset.csv")
+            st.info("ℹ️ No saved upload found — using default sample dataset")
+        except FileNotFoundError:
+            st.warning("⚠️ No dataset available. Please upload a file.")
+            st.stop()
+
+
 
 def yes_no(value):
     return str(value).strip().lower() in ["yes", "true", "1", "y"]
