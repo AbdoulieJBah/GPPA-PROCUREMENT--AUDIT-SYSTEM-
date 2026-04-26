@@ -17,6 +17,8 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
 import plotly.express as px
+import sqlite3
+from datetime import datetime
 import google.generativeai as genai
 
 gemini_model = None
@@ -26,6 +28,9 @@ if "GEMINI_API_KEY" in st.secrets:
     gemini_model = genai.GenerativeModel("gemini-2.5-flash")
 else:
     st.warning("Gemini API key is missing. AI Copilot features are disabled.")
+
+init_database()
+
 st.set_page_config(
     page_title="GPPA Advanced AI Procurement Risk System",
     layout="wide"
@@ -64,6 +69,88 @@ uploaded_file = st.file_uploader(
     type=["csv", "xlsx"]
 )
 
+if uploaded_file is not None:
+    if uploaded_file.name.endswith(".csv"):
+        df = pd.read_csv(uploaded_file)
+    else:
+        df = pd.read_excel(uploaded_file)
+
+    save_uploaded_dataset(df, uploaded_file.name)
+    st.success("✅ Uploaded dataset saved permanently to database")
+
+else:
+    saved_df, saved_name, saved_date = load_latest_dataset()
+
+    if saved_df is not None:
+        df = saved_df
+        st.info(f"ℹ️ Using saved dataset: {saved_name} uploaded on {saved_date}")
+    else:
+        try:
+            df = pd.read_csv("gppa_large_dataset.csv")
+            st.info("ℹ️ No saved upload found — using default sample dataset")
+        except FileNotFoundError:
+            st.warning("⚠️ No dataset available. Please upload a file.")
+            st.stop()
+
+DB_PATH = "gppa_procurement_data.db"
+
+def init_database():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS uploaded_datasets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            upload_name TEXT,
+            upload_date TEXT,
+            data TEXT
+        )
+    """)
+
+    conn.commit()
+    conn.close()
+
+
+def save_uploaded_dataset(df, upload_name):
+    conn = sqlite3.connect(DB_PATH)
+
+    data_json = df.to_json(orient="records")
+
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO uploaded_datasets (upload_name, upload_date, data)
+        VALUES (?, ?, ?)
+        """,
+        (
+            upload_name,
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            data_json
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+
+def load_latest_dataset():
+    conn = sqlite3.connect(DB_PATH)
+
+    query = """
+        SELECT upload_name, upload_date, data
+        FROM uploaded_datasets
+        ORDER BY id DESC
+        LIMIT 1
+    """
+
+    result = pd.read_sql_query(query, conn)
+    conn.close()
+
+    if result.empty:
+        return None, None, None
+
+    df = pd.read_json(result.loc[0, "data"])
+    return df, result.loc[0, "upload_name"], result.loc[0, "upload_date"]
 
 def yes_no(value):
     return str(value).strip().lower() in ["yes", "true", "1", "y"]
