@@ -45,18 +45,18 @@ if "page" not in st.session_state:
 
 if st.session_state.page == "landing":
 
-    # ---------------- HERO SECTION ----------------
-    components.html("""
+    # ---------------- CSS ----------------
+    st.markdown("""
     <style>
     .hero {
-        padding: 55px 25px;
+        padding: 45px 25px;
         border-radius: 24px;
         background: linear-gradient(135deg, #0f172a, #1e3a8a);
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
         box-shadow: 0px 10px 30px rgba(0,0,0,0.35);
-        font-family: sans-serif;
     }
+    
     .hero-badge {
         display: inline-block;
         padding: 6px 14px;
@@ -66,30 +66,74 @@ if st.session_state.page == "landing":
         color: #93c5fd;
         margin-bottom: 12px;
     }
+    
     .hero-title {
-        font-size: 44px;
+        font-size: 42px;
         font-weight: 800;
         color: white;
-        line-height: 1.2;
+        line-height: 1.15;
     }
+    
     .hero-subtitle {
         font-size: 18px;
         color: #cbd5e1;
-        margin-top: 12px;
-        line-height: 1.6;
+        margin-top: 14px;
+        line-height: 1.5;
     }
+    
     .hero-desc {
         font-size: 15px;
         color: #93c5fd;
-        margin-top: 10px;
+        margin-top: 12px;
     }
+    
+    /* Mobile optimization */
     @media (max-width: 768px) {
+        .hero {
+            padding: 28px 16px;
+            border-radius: 18px;
+            margin-bottom: 18px;
+        }
+    
+        .hero-badge {
+            font-size: 12px;
+            padding: 5px 10px;
+            margin-bottom: 10px;
+        }
+    
         .hero-title {
             font-size: 28px;
+            line-height: 1.2;
+        }
+    
+        .hero-subtitle {
+            font-size: 15px;
+            line-height: 1.45;
+        }
+    
+        .hero-desc {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+    
+        div[data-testid="stMetric"] {
+            padding: 8px 0;
+        }
+    
+        div[data-testid="stMetricValue"] {
+            font-size: 28px;
+        }
+    
+        div[data-testid="stMetricLabel"] {
+            font-size: 14px;
         }
     }
     </style>
+    """, unsafe_allow_html=True)
     
+    
+    # ---------------- HERO SECTION ----------------
+    components.html("""
     <div class="hero">
         <div class="hero-badge">🚀 AI-Powered GovTech Platform</div>
         <div class="hero-title">AI-Powered Procurement Risk System</div>
@@ -97,18 +141,25 @@ if st.session_state.page == "landing":
             Detect compliance violations, high-risk procurements, audit priorities, and anomalies using AI.
         </div>
         <div class="hero-desc">
-            Built for public procurement authorities, auditors, compliance teams, and data-driven governance.
+            Built for procurement authorities, auditors, compliance teams, and data-driven governance.
         </div>
     </div>
-    """, height=330)
+    """, height=280)
     
     
     # ---------------- KPI METRICS ----------------
+    st.markdown("### Platform Highlights")
+    
     col1, col2, col3 = st.columns(3)
     
-    col1.metric("⚠️ Risk Detection", "95%+", "High accuracy")
-    col2.metric("📊 Coverage", "Multi-sector", "Gov-wide")
-    col3.metric("🤖 AI Insights", "Real-time", "Explainable")
+    with col1:
+        st.metric("⚠️ Risk Detection", "95%+", "High accuracy")
+    
+    with col2:
+        st.metric("📊 Coverage", "Cross-sector", "Gov-wide")
+    
+    with col3:
+        st.metric("🤖 AI Insights", "Real-time", "Explainable")
     
     
     # ---------------- FEATURE CARDS ----------------
