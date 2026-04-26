@@ -734,54 +734,58 @@ with tab1:
             display_df.index,
             format_func=lambda x: f"{x} - {display_df.loc[x, 'institution']} | {display_df.loc[x, 'AI Risk Category']}"
         )
-
+    
         st.dataframe(display_df.loc[[selected_index]], use_container_width=True)
-
+    
         risk = display_df.loc[selected_index, "AI Risk Category"]
-
+    
         if risk == "High":
             st.markdown("### 🔴 High Risk Procurement")
         elif risk == "Medium":
             st.markdown("### 🟠 Medium Risk Procurement")
         else:
             st.markdown("### 🟢 Low Risk Procurement")
-
+    
         st.markdown("---")
-
+    
         if st.button("Explain this procurement"):
             selected_row = display_df.loc[selected_index].to_dict()
-
+    
             prompt = f"""
-You are an expert GPPA procurement auditor.
-
-Analyze the procurement record below and produce a professional audit explanation.
-
-IMPORTANT:
-- Highlight critical risks using ⚠️ emoji where necessary
-- Be clear, structured, and concise
-- Use professional audit language
-- Do NOT exceed 150 words
-
-Procurement Data:
-{selected_row}
-
-Provide:
-- Risk Level
-- Key Issues
-- Auditor Action
-- Recommendation
-"""
-
+    You are an expert GPPA procurement auditor.
+    
+    Analyze the procurement record below and produce a professional audit explanation.
+    
+    IMPORTANT:
+    - Highlight critical risks using ⚠️ emoji where necessary
+    - Be clear, structured, and concise
+    - Use professional audit language
+    - Do NOT exceed 150 words
+    
+    Procurement Data:
+    {selected_row}
+    
+    Provide:
+    - Risk Level
+    - Key Issues
+    - Auditor Action
+    - Recommendation
+    """
+    
             with st.spinner("Generating AI audit explanation..."):
-                try:
-                   if gemini_model is None:
-                        st.warning("AI features are disabled (missing API key).")
-                    else:
-                        try:
-                            response = gemini_model.generate_content(prompt)
-                            st.markdown(response.text)
-                        except Exception as e:
-                            st.error(f"⚠️ AI error: {e}")
+    
+                # ✅ FIXED LOGIC
+                if gemini_model is None:
+                    st.warning("⚠️ AI features are disabled (missing API key).")
+                else:
+                    try:
+                        response = gemini_model.generate_content(prompt)
+                        st.markdown(response.text)
+                    except Exception as e:
+                        st.error(f"⚠️ AI error: {e}")
+    
+    else:
+        st.info("No procurement records available to explain.")
 
     st.subheader("🤖 GPPA AI Audit Copilot")
 
