@@ -39,6 +39,178 @@ st.set_page_config(
     layout="wide"
 )
 
+if "page" not in st.session_state:
+    st.session_state.page = "landing"
+
+if st.session_state.page == "landing":
+
+    st.markdown("""
+    <style>
+    .hero {
+        padding: 55px;
+        border-radius: 24px;
+        background: linear-gradient(135deg, #0f172a, #1e3a8a);
+        color: white;
+        text-align: center;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    .hero-title {
+        font-size: 48px;
+        font-weight: 800;
+        margin-bottom: 12px;
+    }
+    .hero-subtitle {
+        font-size: 20px;
+        color: #dbeafe;
+        margin-bottom: 25px;
+    }
+    .feature-card {
+        padding: 22px;
+        border-radius: 18px;
+        background: #111827;
+        border: 1px solid #374151;
+        color: white;
+        min-height: 170px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    }
+    .feature-title {
+        font-size: 21px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    .feature-text {
+        color: #cbd5e1;
+        font-size: 15px;
+    }
+    .metric-card {
+        padding: 18px;
+        border-radius: 16px;
+        background: #0f172a;
+        border: 1px solid #334155;
+        text-align: center;
+        color: white;
+    }
+    .metric-value {
+        font-size: 30px;
+        font-weight: 800;
+        color: #38bdf8;
+    }
+    .metric-label {
+        color: #cbd5e1;
+        font-size: 14px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="hero">
+        <div class="hero-title">AI-Powered Procurement Risk System</div>
+        <div class="hero-subtitle">
+            Detect compliance violations, high-risk procurements, audit priorities, and anomalies using AI.
+        </div>
+        <div style="font-size:16px; color:#bfdbfe;">
+            Built for public procurement authorities, auditors, compliance teams, and data-driven governance.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-title">🤖 AI Audit Copilot</div>
+            <div class="feature-text">
+                Ask questions about procurement risks, compliance issues, institutions, and audit priorities.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-title">📊 Executive Dashboard</div>
+            <div class="feature-text">
+                Power BI-style visuals showing risk exposure, compliance scores, institutions, and procurement categories.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-title">🧠 ML Risk Engine</div>
+            <div class="feature-text">
+                Uses machine learning, SMOTE balancing, anomaly detection, and prediction confidence.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    m1, m2, m3, m4 = st.columns(4)
+
+    with m1:
+        st.markdown("""
+        <div class="metric-card">
+            <div class="metric-value">AI</div>
+            <div class="metric-label">Audit Intelligence</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with m2:
+        st.markdown("""
+        <div class="metric-card">
+            <div class="metric-value">ML</div>
+            <div class="metric-label">Risk Prediction</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with m3:
+        st.markdown("""
+        <div class="metric-card">
+            <div class="metric-value">BI</div>
+            <div class="metric-label">Executive Insights</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with m4:
+        st.markdown("""
+        <div class="metric-card">
+            <div class="metric-value">GovTech</div>
+            <div class="metric-label">Compliance Monitoring</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    st.markdown("""
+    ### 🎯 What This System Does
+
+    This platform helps procurement authorities and auditors:
+    - Detect high-risk procurement cases early
+    - Identify missing approvals, low competition, short tender periods, and supplier risks
+    - Generate AI-written audit explanations and executive reports
+    - Train ML models to classify procurement risk
+    - Support transparent and data-driven public procurement oversight
+    """)
+
+    st.markdown("---")
+
+    col_start, col_info = st.columns([1, 2])
+
+    with col_start:
+        if st.button("🚀 Enter Dashboard", use_container_width=True):
+            st.session_state.page = "dashboard"
+            st.rerun()
+
+    with col_info:
+        st.info("Built by Abdoulie J Bah | AI Engineer • Data Scientist • BI Developer")
+
+    st.stop()
+
+
 st.markdown("""
 <style>
 .kpi-card {
