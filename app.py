@@ -405,7 +405,7 @@ tab1, tab2, tab3 = st.tabs([
 
 with tab1:
      st.markdown("## 📊 GPPA Executive Risk Intelligence Dashboard")
-        st.write(
+     st.write(
             "Designed for GPPA directors, auditors, and decision-makers. "
             "This section focuses on compliance status, risk exposure, audit priorities, and downloadable reports."
         )
@@ -413,7 +413,7 @@ with tab1:
         # -----------------------------
         # FILTERS FIRST
         # -----------------------------
-        st.subheader("🔎 Filters")
+     st.subheader("🔎 Filters")
     
         col_a, col_b, col_c = st.columns(3)
     
@@ -460,7 +460,7 @@ with tab1:
         else:
             anomalies = 0
     
-        st.subheader("📌 Executive Summary")
+     st.subheader("📌 Executive Summary")
     
         kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
     
@@ -518,23 +518,23 @@ with tab1:
                 .index[0]
             )
     
-            st.subheader("🧠 Key Executive Insights")
-            st.write(f"""
+     st.subheader("🧠 Key Executive Insights")
+     st.write(f"""
             - **{high_pct:.1f}%** of the selected procurement records are classified as **High Risk**.
             - **{medium_pct:.1f}%** of the selected procurement records are classified as **Medium Risk**.
             - The highest average risk is observed in **{highest_risk_inst}**.
             - Priority review should focus on missing approvals, low competition, short tender periods, unregistered suppliers, and contract variations.
             """)
         else:
-            st.warning("No records match the selected filters.")
+     st.warning("No records match the selected filters.")
     
-        st.divider()
+     st.divider()
     
         # -----------------------------
         # BI-STYLE CHARTS
         # -----------------------------
-        if total > 0:
-            st.markdown("## 📊 GPPA Executive Risk Intelligence Dashboard")
+ if total > 0:
+     st.markdown("## 📊 GPPA Executive Risk Intelligence Dashboard")
     
             risk_colors = {
                 "High": "#d62728",
@@ -615,7 +615,7 @@ with tab1:
                 st.plotly_chart(fig_method, use_container_width=True)
     
             if "date" in display_df.columns:
-                st.subheader("📈 Risk Trend Over Time")
+     st.subheader("📈 Risk Trend Over Time")
     
                 trend_df = display_df.copy()
                 trend_df["date"] = pd.to_datetime(trend_df["date"], errors="coerce")
@@ -641,7 +641,7 @@ with tab1:
         # -----------------------------
         # RED FLAGS PANEL
         # -----------------------------
-        st.subheader("🚨 Auto Red Flags Panel: Top 5 Riskiest Procurements")
+     st.subheader("🚨 Auto Red Flags Panel: Top 5 Riskiest Procurements")
     
         top5_risk = display_df.sort_values("AI Risk Score", ascending=False).head(5)
     
@@ -703,7 +703,7 @@ with tab1:
          # -----------------------------
         # 🎯 Explain Selected Procurement 
         # -----------------------------
-        st.subheader("🎯 Explain Selected Procurement")
+     st.subheader("🎯 Explain Selected Procurement")
         
         if len(display_df) > 0:
             selected_index = st.selectbox(
