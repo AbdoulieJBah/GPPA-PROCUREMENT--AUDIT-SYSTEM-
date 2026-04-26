@@ -20,7 +20,7 @@ import plotly.express as px
 import google.generativeai as genai
 
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-
+gemini_model = genai.GenerativeModel("gemini-pro")
 
 st.set_page_config(
     page_title="GPPA Advanced AI Procurement Risk System",
