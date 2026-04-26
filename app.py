@@ -70,7 +70,7 @@ st.write(
 # -----------------------------
 # 🚀 SIDEBAR (PROFESSIONAL UI)
 # -----------------------------
-st.sidebar.markdown("## 👤 About This Project")
+st.sidebar.markdown("## 👤 About This Dashboard")
 
 st.sidebar.markdown("""
 <div style="padding:12px; border-radius:10px; background-color:#0f172a; border:1px solid #1e293b;">
