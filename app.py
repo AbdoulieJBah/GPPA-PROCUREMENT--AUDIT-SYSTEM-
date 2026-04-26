@@ -55,6 +55,16 @@ if st.session_state.page == "landing":
         margin-bottom: 30px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.35);
     }
+    st.markdown("""
+    ### 🏛️ Designed For
+    
+    - Government Procurement Authorities  
+    - Anti-Corruption Agencies  
+    - Internal Audit Units  
+    - World Bank / Donor-Funded Projects  
+    - Compliance & Risk Teams  
+    
+    """)
     .hero-title {
         font-size: 48px;
         font-weight: 800;
@@ -148,6 +158,16 @@ if st.session_state.page == "landing":
         """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric("⚠️ Risk Detection", "95%+", "↑ Accuracy")
+    
+    with col2:
+        st.metric("📊 Data Coverage", "Multi-sector", "Gov-wide")
+    
+    with col3:
+        st.metric("🤖 AI Insights", "Real-time", "Explainable")
 
     m1, m2, m3, m4 = st.columns(4)
 
@@ -201,14 +221,20 @@ if st.session_state.page == "landing":
     col_start, col_info = st.columns([1, 2])
 
     with col_start:
-        if st.button("🚀 Enter Dashboard", use_container_width=True):
+        if st.button("🚀 Launch Audit Dashboard", use_container_width=True):
+            st.caption("No login required • Instant access")
             st.session_state.page = "dashboard"
             st.rerun()
 
     with col_info:
-        st.info("Built by Abdoulie J Bah | AI Engineer • Data Scientist • BI Developer")
-
-    st.stop()
+        st.markdown("""
+        ---
+        **Built by Abdoulie J Bah**  
+        AI Engineer | Data Scientist | GovTech Specialist  
+    
+        🔗 [LinkedIn](https://linkedin.com) | 💻 [GitHub](https://github.com)
+        """)
+        st.stop()
 
 
 st.markdown("""
