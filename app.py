@@ -109,6 +109,55 @@ if st.session_state.page == "landing":
         color: #86efac;
         font-size: 13px;
     }
+
+    .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 20px;
+    margin-bottom: 25px;
+    }
+    
+    .feature-card {
+        padding: 20px;
+        border-radius: 18px;
+        background: #111827;
+        border: 1px solid #374151;
+        min-height: 150px;
+    }
+    
+    .feature-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #60a5fa;
+        margin-bottom: 10px;
+    }
+    
+    .feature-text {
+        font-size: 14px;
+        color: #d1d5db;
+        line-height: 1.5;
+    }
+    
+    @media (max-width: 768px) {
+        .features-grid {
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+    
+        .feature-card {
+            min-height: auto;
+            padding: 16px;
+        }
+    
+        .feature-title {
+            font-size: 17px;
+        }
+    
+        .feature-text {
+            font-size: 14px;
+        }
+    }
     
     /* Mobile */
     @media (max-width: 768px) {
@@ -132,6 +181,7 @@ if st.session_state.page == "landing":
         .kpi-value {
             font-size: 24px;
         }
+        
     }
     </style>
     """, unsafe_allow_html=True)
@@ -172,31 +222,32 @@ if st.session_state.page == "landing":
     
     
     # ---------------- FEATURE CARDS ----------------
-    col1, col2, col3 = st.columns(3)
+    st.markdown("""
+    <div class="features-grid">
     
-    with col1:
-        st.markdown("""<div class="feature-card">
-        <div class="feature-title">🤖 AI Audit Copilot</div>
-        <div class="feature-text">
-        Ask questions about procurement risks, compliance issues, institutions, and audit priorities.
+        <div class="feature-card">
+            <div class="feature-title">🤖 AI Audit Copilot</div>
+            <div class="feature-text">
+                Ask questions about procurement risks, compliance issues, institutions, and audit priorities.
+            </div>
         </div>
-        </div>""", unsafe_allow_html=True)
     
-    with col2:
-        st.markdown("""<div class="feature-card">
-        <div class="feature-title">📊 Executive Dashboard</div>
-        <div class="feature-text">
-        Visualize risk exposure, compliance scores, institutions, and procurement categories.
+        <div class="feature-card">
+            <div class="feature-title">📊 Executive Dashboard</div>
+            <div class="feature-text">
+                Visualize risk exposure, compliance scores, institutions, and procurement categories.
+            </div>
         </div>
-        </div>""", unsafe_allow_html=True)
     
-    with col3:
-        st.markdown("""<div class="feature-card">
-        <div class="feature-title">🧠 ML Risk Engine</div>
-        <div class="feature-text">
-        Uses machine learning, SMOTE balancing, anomaly detection, and prediction confidence.
+        <div class="feature-card">
+            <div class="feature-title">🧠 ML Risk Engine</div>
+            <div class="feature-text">
+                Uses machine learning, SMOTE balancing, anomaly detection, and prediction confidence.
+            </div>
         </div>
-        </div>""", unsafe_allow_html=True)
+    
+    </div>
+    """, unsafe_allow_html=True)
     st.markdown("""
     ### 🏛️ Designed For
     
