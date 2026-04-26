@@ -785,8 +785,7 @@ Provide:
                                 st.markdown(response.text)
                             except Exception as e:
                                 st.error(f"⚠️ AI error: {e}")
-                                        except Exception as e:
-                                            st.error(f"AI explanation failed: {e}")
+                                        
 
     else:
         st.info("No procurement records available to explain.")
