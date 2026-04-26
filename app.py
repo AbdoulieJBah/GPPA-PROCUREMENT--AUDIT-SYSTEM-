@@ -782,10 +782,6 @@ Provide:
                             st.markdown(response.text)
                         except Exception as e:
                             st.error(f"⚠️ AI error: {e}")
-                                                            
-                    
-                        else:
-                            st.info("No procurement records available to explain.")
 
     st.subheader("🤖 GPPA AI Audit Copilot")
 
