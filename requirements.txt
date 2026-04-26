@@ -9,3 +9,4 @@ joblib
 shap
 reportlab
 openai
+google-generativeai
