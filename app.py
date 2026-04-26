@@ -240,7 +240,7 @@ if st.session_state.page == "landing":
         </div>
         </div>
         """, unsafe_allow_html=True)
-        st.stop()
+        
 
 
 st.markdown("""
