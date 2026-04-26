@@ -599,185 +599,198 @@ if uploaded_file:
 
         
 
-       st.subheader("🎯 Explain Selected Procurement")
+       # -----------------------------
+# 🎯 Explain Selected Procurement
+# -----------------------------
+st.subheader("🎯 Explain Selected Procurement")
 
-        if len(display_df) > 0:
-            selected_index = st.selectbox(
-                "Select procurement record",
-                display_df.index,
-                format_func=lambda x: f"{x} - {display_df.loc[x, 'institution']} | {display_df.loc[x, 'AI Risk Category']}"
-            )
-        
-            st.dataframe(display_df.loc[[selected_index]], use_container_width=True)
-        
-            if st.button("Explain this procurement"):
-                selected_row = display_df.loc[selected_index].to_dict()
-        
-                prompt = f"""
-        You are an expert GPPA procurement auditor.
-        
-        Explain this procurement record in simple professional language:
-        
-        {selected_row}
-        
-        Explain:
-        1. Why it is risky or compliant
-        2. The most important compliance issues
-        3. What an auditor should do next
-        4. A short recommendation for a GPPA director
-        """
-        
-                with st.spinner("Generating explanation..."):
-                    try:
-                        response = gemini_model.generate_content(prompt)
-                        st.markdown(response.text)
-                    except Exception as e:
-                        st.warning("AI explanation is temporarily unavailable. Please check your Gemini API key or quota.")
-        else:
-            st.info("No procurement records available to explain.")
+if len(display_df) > 0:
+    selected_index = st.selectbox(
+        "Select procurement record",
+        display_df.index,
+        format_func=lambda x: f"{x} - {display_df.loc[x, 'institution']} | {display_df.loc[x, 'AI Risk Category']}"
+    )
 
-        st.subheader("🤖 GPPA AI Audit Copilot")
+    st.dataframe(display_df.loc[[selected_index]], use_container_width=True)
 
-        if "copilot_messages" not in st.session_state:
-            st.session_state.copilot_messages = []
-        
-        for msg in st.session_state.copilot_messages:
-            with st.chat_message(msg["role"]):
-                st.markdown(msg["content"])
-        
-        
-        def run_ai_copilot(question, df):
-            sample_data = df.sample(min(30, len(df))).to_dict(orient="records")
-        
-            prompt = f"""
-        You are an expert AI procurement auditor for GPPA.
-        
-        Analyze the procurement dataset and answer questions about:
-        - Compliance risks
-        - High-risk procurements
-        - Audit priorities
-        - Anomalies
-        - Recommendations for GPPA directors
-        
-        Dataset sample:
-        {sample_data}
-        
-        Dataset summary:
-        Total records: {len(df)}
-        High risk cases: {(df["AI Risk Category"] == "High").sum() if "AI Risk Category" in df.columns else 0}
-        Average risk score: {df["AI Risk Score"].mean() if "AI Risk Score" in df.columns else 0:.2f}
-        Average compliance score: {df["Compliance Score"].mean() if "Compliance Score" in df.columns else 0:.2f}
-        
-        User question:
-        {question}
-        
-        Answer clearly like a professional audit analyst.
-        """
-        
-            response = gemini_model.generate_content(prompt)
-            return response.text
-        
-        
-        user_question = st.chat_input(
-            "Ask the AI copilot about compliance, risk, anomalies, or audit priorities"
+    if st.button("Explain this procurement"):
+        selected_row = display_df.loc[selected_index].to_dict()
+
+        prompt = f"""You are an expert GPPA procurement auditor.
+
+Explain this procurement record in simple professional language:
+
+{selected_row}
+
+Explain:
+1. Why it is risky or compliant
+2. The most important compliance issues
+3. What an auditor should do next
+4. A short recommendation for a GPPA director
+"""
+
+        with st.spinner("Generating explanation..."):
+            try:
+                response = gemini_model.generate_content(prompt)
+                st.markdown(response.text)
+            except Exception:
+                st.warning("AI explanation is temporarily unavailable.")
+
+else:
+    st.info("No procurement records available to explain.")
+
+
+# -----------------------------
+# 🤖 AI COPILOT
+# -----------------------------
+st.subheader("🤖 GPPA AI Audit Copilot")
+
+if "copilot_messages" not in st.session_state:
+    st.session_state.copilot_messages = []
+
+for msg in st.session_state.copilot_messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+
+
+def run_ai_copilot(question, df):
+    sample_data = df.sample(min(30, len(df))).to_dict(orient="records")
+
+    prompt = f"""You are an expert AI procurement auditor for GPPA.
+
+Analyze the procurement dataset and answer questions about:
+- Compliance risks
+- High-risk procurements
+- Audit priorities
+- Anomalies
+- Recommendations for GPPA directors
+
+Dataset sample:
+{sample_data}
+
+Dataset summary:
+Total records: {len(df)}
+High risk cases: {(df["AI Risk Category"] == "High").sum() if "AI Risk Category" in df.columns else 0}
+Average risk score: {df["AI Risk Score"].mean() if "AI Risk Score" in df.columns else 0:.2f}
+Average compliance score: {df["Compliance Score"].mean() if "Compliance Score" in df.columns else 0:.2f}
+
+User question:
+{question}
+
+Answer clearly like a professional audit analyst.
+"""
+
+    response = gemini_model.generate_content(prompt)
+    return response.text
+
+
+user_question = st.chat_input(
+    "Ask the AI copilot about compliance, risk, anomalies, or audit priorities"
+)
+
+if user_question:
+    st.session_state.copilot_messages.append({
+        "role": "user",
+        "content": user_question
+    })
+
+    with st.chat_message("user"):
+        st.markdown(user_question)
+
+    with st.chat_message("assistant"):
+        with st.spinner("Analyzing procurement data..."):
+            try:
+                answer = run_ai_copilot(user_question, display_df)
+                st.markdown(answer)
+            except Exception:
+                answer = "AI Copilot is temporarily unavailable."
+                st.warning(answer)
+
+    st.session_state.copilot_messages.append({
+        "role": "assistant",
+        "content": answer
+    })
+
+
+# -----------------------------
+# 📊 AUTO CHARTS FROM QUESTIONS
+# -----------------------------
+if user_question:
+    q = user_question.lower()
+
+    if "risk distribution" in q or "pie chart" in q:
+        chart_df = display_df["AI Risk Category"].value_counts().reset_index()
+        chart_df.columns = ["Risk Category", "Count"]
+
+        fig = px.pie(
+            chart_df,
+            names="Risk Category",
+            values="Count",
+            title="Risk Distribution",
+            hole=0.45
         )
-        
-        if user_question:
-            st.session_state.copilot_messages.append({
-                "role": "user",
-                "content": user_question
-            })
-        
-            with st.chat_message("user"):
-                st.markdown(user_question)
-        
-            with st.chat_message("assistant"):
-                with st.spinner("Analyzing procurement data..."):
-                    try:
-                        answer = run_ai_copilot(user_question, display_df)
-                        st.markdown(answer)
-                    except Exception as e:
-                        answer = "AI Copilot is temporarily unavailable. Please check your Gemini API key or quota."
-                        st.warning(answer)
-        
-            st.session_state.copilot_messages.append({
-                "role": "assistant",
-                "content": answer
-            })
+        st.plotly_chart(fig, use_container_width=True)
 
-        if user_question:
-            q = user_question.lower()
-        
-            if "risk distribution" in q or "pie chart" in q:
-                chart_df = display_df["AI Risk Category"].value_counts().reset_index()
-                chart_df.columns = ["Risk Category", "Count"]
-        
-                fig = px.pie(
-                    chart_df,
-                    names="Risk Category",
-                    values="Count",
-                    title="Risk Distribution",
-                    hole=0.45
-                )
-                st.plotly_chart(fig, use_container_width=True)
-        
-            elif "institution" in q and "risk" in q:
-                chart_df = (
-                    display_df.groupby("institution")["AI Risk Score"]
-                    .mean()
-                    .reset_index()
-                    .sort_values("AI Risk Score", ascending=False)
-                )
-        
-                fig = px.bar(
-                    chart_df,
-                    x="AI Risk Score",
-                    y="institution",
-                    orientation="h",
-                    title="Average Risk by Institution"
-                )
-                st.plotly_chart(fig, use_container_width=True)
+    elif "institution" in q and "risk" in q:
+        chart_df = (
+            display_df.groupby("institution")["AI Risk Score"]
+            .mean()
+            .reset_index()
+            .sort_values("AI Risk Score", ascending=False)
+        )
 
-        st.subheader("📄 AI-Written Executive Report")
+        fig = px.bar(
+            chart_df,
+            x="AI Risk Score",
+            y="institution",
+            orientation="h",
+            title="Average Risk by Institution"
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
-        if st.button("Generate AI Executive Report"):
-            report_sample = (
-                display_df.sort_values("AI Risk Score", ascending=False)
-                .head(20)
-                .to_dict(orient="records")
+
+# -----------------------------
+# 📄 AI REPORT
+# -----------------------------
+st.subheader("📄 AI-Written Executive Report")
+
+if st.button("Generate AI Executive Report"):
+    report_sample = (
+        display_df.sort_values("AI Risk Score", ascending=False)
+        .head(20)
+        .to_dict(orient="records")
+    )
+
+    report_prompt = f"""You are an expert public procurement audit analyst.
+
+Write a concise executive report for GPPA directors based on this procurement data.
+
+Include:
+- Overall risk summary
+- Key compliance weaknesses
+- Top audit priorities
+- Recommended actions
+- Short conclusion
+
+Data sample:
+{report_sample}
+"""
+
+    with st.spinner("Writing executive report..."):
+        try:
+            report_response = gemini_model.generate_content(report_prompt)
+            report_text = report_response.text
+
+            st.markdown(report_text)
+
+            st.download_button(
+                "Download AI Executive Report",
+                report_text,
+                "gppa_ai_executive_report.txt",
+                "text/plain"
             )
-        
-            report_prompt = f"""
-        You are an expert public procurement audit analyst.
-        
-        Write a concise executive report for GPPA directors based on this procurement data.
-        
-        Include:
-        - Overall risk summary
-        - Key compliance weaknesses
-        - Top audit priorities
-        - Recommended actions
-        - Short conclusion
-        
-        Data sample:
-        {report_sample}
-        """
-        
-            with st.spinner("Writing executive report..."):
-                try:
-                    report_response = gemini_model.generate_content(report_prompt)
-                    report_text = report_response.text
-        
-                    st.markdown(report_text)
-        
-                    st.download_button(
-                        "Download AI Executive Report",
-                        report_text,
-                        "gppa_ai_executive_report.txt",
-                        "text/plain"
-                    )
-                except Exception as e:
-                    st.warning("AI report generation is temporarily unavailable. Please check your Gemini API key or quota.")
+        except Exception:
+            st.warning("AI report generation is temporarily unavailable.")
                 
             st.download_button(
                 "Download AI Executive Report",
