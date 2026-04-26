@@ -299,10 +299,9 @@ def risk_category(score):
     return "Low"
 
 
+df = df.loc[:, ~df.columns.duplicated()]
 
-    df = df.loc[:, ~df.columns.duplicated()]
-
-    if "procurement_category" not in df.columns:
+ if "procurement_category" not in df.columns:
         df["procurement_category"] = "goods"
 
     required_columns = [
@@ -401,6 +400,10 @@ def risk_category(score):
         "🔮 Predict New Procurement"
     ])
 
+
+
+
+    
     with tab1:
         st.markdown("## 📊 GPPA Executive Risk Intelligence Dashboard")
         st.write(
