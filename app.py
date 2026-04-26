@@ -46,79 +46,98 @@ if st.session_state.page == "landing":
 
     st.markdown("""
     <style>
+    
     .hero {
-        padding: 55px;
-        border-radius: 24px;
+        padding: 50px 20px;
+        border-radius: 20px;
         background: linear-gradient(135deg, #0f172a, #1e3a8a);
-        color: white;
         text-align: center;
         margin-bottom: 30px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.35);
     }
-   
+    
     .hero-title {
-        font-size: 48px;
+        font-size: 42px;
         font-weight: 800;
-        margin-bottom: 12px;
+        color: white;
+        line-height: 1.2;
+        word-break: keep-all;
     }
+    
     .hero-subtitle {
-        font-size: 20px;
-        color: #dbeafe;
-        margin-bottom: 25px;
+        font-size: 18px;
+        color: #cbd5e1;
+        margin-top: 12px;
+        line-height: 1.6;
     }
+    
+    .hero-desc {
+        font-size: 15px;
+        color: #93c5fd;
+        margin-top: 10px;
+    }
+    
     .feature-card {
-        padding: 22px;
-        border-radius: 18px;
+        padding: 20px;
+        border-radius: 15px;
         background: #111827;
         border: 1px solid #374151;
-        color: white;
-        min-height: 170px;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+        height: 140px;
     }
+    
     .feature-title {
-        font-size: 21px;
+        font-size: 18px;
         font-weight: 700;
+        color: #60a5fa;
         margin-bottom: 8px;
     }
+    
     .feature-text {
-        color: #cbd5e1;
-        font-size: 15px;
-    }
-    .metric-card {
-        padding: 18px;
-        border-radius: 16px;
-        background: #0f172a;
-        border: 1px solid #334155;
-        text-align: center;
-        color: white;
-    }
-    .metric-value {
-        font-size: 30px;
-        font-weight: 800;
-        color: #38bdf8;
-    }
-    .metric-label {
-        color: #cbd5e1;
         font-size: 14px;
+        color: #d1d5db;
     }
+    
+    /* Mobile Fix */
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 28px;
+        }
+    }
+    
     </style>
     """, unsafe_allow_html=True)
 
 
+    # ---------------- HERO SECTION ----------------
     st.markdown("""
     <div class="hero">
-        <div class="hero-title">AI-Powered Procurement Risk System</div>
+    
+        <div class="hero-title">
+            AI-Powered Procurement Risk System
+        </div>
+    
         <div class="hero-subtitle">
             Detect compliance violations, high-risk procurements, audit priorities, and anomalies using AI.
         </div>
-        <div style="font-size:16px; color:#bfdbfe;">
+    
+        <div class="hero-desc">
             Built for public procurement authorities, auditors, compliance teams, and data-driven governance.
         </div>
+    
     </div>
     """, unsafe_allow_html=True)
-
+    
+    
+    # ---------------- KPI METRICS ----------------
     col1, col2, col3 = st.columns(3)
-
+    
+    col1.metric("⚠️ Risk Detection", "95%+", "High accuracy")
+    col2.metric("📊 Coverage", "Multi-sector", "Gov-wide")
+    col3.metric("🤖 AI Insights", "Real-time", "Explainable")
+    
+    
+    # ---------------- FEATURE CARDS ----------------
+    col1, col2, col3 = st.columns(3)
+    
     with col1:
         st.markdown("""
         <div class="feature-card">
@@ -128,17 +147,17 @@ if st.session_state.page == "landing":
             </div>
         </div>
         """, unsafe_allow_html=True)
-
+    
     with col2:
         st.markdown("""
         <div class="feature-card">
             <div class="feature-title">📊 Executive Dashboard</div>
             <div class="feature-text">
-                Power BI-style visuals showing risk exposure, compliance scores, institutions, and procurement categories.
+                Visualize risk exposure, compliance scores, institutions, and procurement categories.
             </div>
         </div>
         """, unsafe_allow_html=True)
-
+    
     with col3:
         st.markdown("""
         <div class="feature-card">
@@ -148,54 +167,6 @@ if st.session_state.page == "landing":
             </div>
         </div>
         """, unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.metric("⚠️ Risk Detection", "95%+", "↑ Accuracy")
-    
-    with col2:
-        st.metric("📊 Data Coverage", "Multi-sector", "Gov-wide")
-    
-    with col3:
-        st.metric("🤖 AI Insights", "Real-time", "Explainable")
-
-    m1, m2, m3, m4 = st.columns(4)
-
-    with m1:
-        st.markdown("""
-        <div class="metric-card">
-            <div class="metric-value">AI</div>
-            <div class="metric-label">Audit Intelligence</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with m2:
-        st.markdown("""
-        <div class="metric-card">
-            <div class="metric-value">ML</div>
-            <div class="metric-label">Risk Prediction</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with m3:
-        st.markdown("""
-        <div class="metric-card">
-            <div class="metric-value">BI</div>
-            <div class="metric-label">Executive Insights</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with m4:
-        st.markdown("""
-        <div class="metric-card">
-            <div class="metric-value">GovTech</div>
-            <div class="metric-label">Compliance Monitoring</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown("---")
 
     st.markdown("""
     ### 🏛️ Designed For
