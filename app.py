@@ -672,7 +672,7 @@ if uploaded_file:
         """
         
             response = client.responses.create(
-                model="gpt-4o-mini"",
+                model="gpt-4o-mini",
                 input=[
                     {
                         "role": "system",
