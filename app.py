@@ -302,9 +302,9 @@ def risk_category(score):
 df = df.loc[:, ~df.columns.duplicated()]
 
  if "procurement_category" not in df.columns:
-        df["procurement_category"] = "goods"
+     df["procurement_category"] = "goods"
 
-    required_columns = [
+ required_columns = [
         "institution",
         "procurement_category",
         "procurement_method",
