@@ -9,4 +9,4 @@ joblib
 shap
 reportlab
 openai
-google-generativeai
+google-generativeai>=0.8.5
