@@ -55,15 +55,12 @@ if st.session_state.page == "landing":
         margin-bottom: 30px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.35);
     }
-    st.markdown("""
-### 🏛️ Designed For
-
-✔ Government Procurement Authorities  
-✔ Anti-Corruption Agencies  
-✔ Internal Audit Units  
-✔ Donor-Funded Projects  
-✔ Compliance & Risk Teams  
-""")
+    st.markdown("""### 🏛️ Designed For 
+        ✔ Government Procurement Authorities  
+        ✔ Anti-Corruption Agencies  
+        ✔ Internal Audit Units  
+        ✔ Donor-Funded Projects  
+        ✔ Compliance & Risk Teams""")
     .hero-title {
         font-size: 48px;
         font-weight: 800;
