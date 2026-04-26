@@ -602,94 +602,93 @@ if uploaded_file:
             """)
 
         
-            # -----------------------------
-            # 🎯 Explain Selected Procurement (FINAL VERSION)
-            # -----------------------------
-            st.subheader("🎯 Explain Selected Procurement")
-            
-            if len(display_df) > 0:
-                selected_index = st.selectbox(
-                    "Select procurement record",
-                    display_df.index,
-                    format_func=lambda x: f"{x} - {display_df.loc[x, 'institution']} | {display_df.loc[x, 'AI Risk Category']}"
-                )
-            
-                st.dataframe(display_df.loc[[selected_index]], use_container_width=True)
-            
-                # ✅ Risk Badge
-                risk = display_df.loc[selected_index, "AI Risk Category"]
-            
-                if risk == "High":
-                    st.markdown("### 🔴 High Risk Procurement")
-                elif risk == "Medium":
-                    st.markdown("### 🟠 Medium Risk Procurement")
-                else:
-                    st.markdown("### 🟢 Low Risk Procurement")
-            
-                # Divider
-                st.markdown("---")
-            
-                if st.button("Explain this procurement"):
-                    selected_row = display_df.loc[selected_index].to_dict()
-            
-                    prompt = f"""
-            You are an expert GPPA procurement auditor.
-            
-            Analyze the procurement record below and produce a professional audit explanation.
-            
-            IMPORTANT:
-            - Highlight critical risks using ⚠️ emoji where necessary
-            - Be clear, structured, and concise
-            - Use professional audit language
-            
-            Procurement Data:
-            {selected_row}
-            
-            Provide the explanation in this format:
-            
-            ### 🧠 Overall Assessment
-            
-            ### 1. Why it is Risky or Compliant
-            - Include strengths (if any)
-            - Highlight major risks with ⚠️
-            
-            ### 2. The Most Important Compliance Issues
-            - List key issues ranked by severity
-            - Use ⚠️ for critical violations
-            
-            ### 3. What an Auditor Should Do Next
-            - Provide clear investigation steps
-            
-            ### 4. A Short Recommendation for a GPPA Director
-            - Executive-level recommendation (concise)
-            """
-            
-                    with st.spinner("Generating AI audit explanation..."):
-                        try:
-                            response = gemini_model.generate_content(prompt)
-            
-                            st.markdown("### 🧠 AI Audit Explanation")
-            
-                            st.markdown(f"""
-                            <div style="
-                                padding:18px;
-                                border-radius:12px;
-                                background-color:#111827;
-                                border:1px solid #374151;
-                                line-height:1.6;
-                            ">
-                            {response.text}
-                            </div>
-                            """, unsafe_allow_html=True)
-            
-                        except Exception as e:
-                            st.error("❌ AI explanation failed.")
-                            st.exception(e)
-            
-            else:
-                st.info("No procurement records available to explain.")
-                    
+         # -----------------------------
+        # 🎯 Explain Selected Procurement 
+        # -----------------------------
+        st.subheader("🎯 Explain Selected Procurement")
         
+        if len(display_df) > 0:
+            selected_index = st.selectbox(
+                "Select procurement record",
+                display_df.index,
+                format_func=lambda x: f"{x} - {display_df.loc[x, 'institution']} | {display_df.loc[x, 'AI Risk Category']}"
+            )
+        
+            st.dataframe(display_df.loc[[selected_index]], use_container_width=True)
+        
+            # ✅ Risk Badge
+            risk = display_df.loc[selected_index, "AI Risk Category"]
+        
+            if risk == "High":
+                st.markdown("### 🔴 High Risk Procurement")
+            elif risk == "Medium":
+                st.markdown("### 🟠 Medium Risk Procurement")
+            else:
+                st.markdown("### 🟢 Low Risk Procurement")
+        
+            # Divider
+            st.markdown("---")
+        
+            if st.button("Explain this procurement"):
+                selected_row = display_df.loc[selected_index].to_dict()
+        
+                prompt = f"""
+        You are an expert GPPA procurement auditor.
+        
+        Analyze the procurement record below and produce a professional audit explanation.
+        
+        IMPORTANT:
+        - Highlight critical risks using ⚠️ emoji where necessary
+        - Be clear, structured, and concise
+        - Use professional audit language
+        
+        Procurement Data:
+        {selected_row}
+        
+        Provide the explanation in this format:
+        
+        ### 🧠 Overall Assessment
+        
+        ### 1. Why it is Risky or Compliant
+        - Include strengths (if any)
+        - Highlight major risks with ⚠️
+        
+        ### 2. The Most Important Compliance Issues
+        - List key issues ranked by severity
+        - Use ⚠️ for critical violations
+        
+        ### 3. What an Auditor Should Do Next
+        - Provide clear investigation steps
+        
+        ### 4. A Short Recommendation for a GPPA Director
+        - Executive-level recommendation (concise)
+        """
+        
+                with st.spinner("Generating AI audit explanation..."):
+                    try:
+                        response = gemini_model.generate_content(prompt)
+        
+                        st.markdown("### 🧠 AI Audit Explanation")
+        
+                        st.markdown(f"""
+                        <div style="
+                            padding:18px;
+                            border-radius:12px;
+                            background-color:#111827;
+                            border:1px solid #374151;
+                            line-height:1.6;
+                        ">
+                        {response.text}
+                        </div>
+                        """, unsafe_allow_html=True)
+        
+                    except Exception as e:
+                        st.error("❌ AI explanation failed.")
+                        st.exception(e)
+        
+        else:
+            st.info("No procurement records available to explain.")
+                
         # -----------------------------
         # 🤖 AI COPILOT
         # -----------------------------
