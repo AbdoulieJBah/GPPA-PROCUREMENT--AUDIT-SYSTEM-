@@ -111,6 +111,10 @@ if st.session_state.page == "landing":
     st.markdown("""
     <div class="hero">
     
+        <div class="hero-badge">
+            🚀 AI-Powered GovTech Platform
+        </div>
+    
         <div class="hero-title">
             AI-Powered Procurement Risk System
         </div>
