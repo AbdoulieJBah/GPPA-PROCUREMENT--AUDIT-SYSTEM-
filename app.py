@@ -789,89 +789,96 @@ with tab1:
 
     st.subheader("🤖 GPPA AI Audit Copilot")
 
+    # -----------------------------
+    # Chat memory
+    # -----------------------------
     if "copilot_messages" not in st.session_state:
         st.session_state.copilot_messages = []
-
+    
     for msg in st.session_state.copilot_messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
-
+    
+    
+    # -----------------------------
+    # AI Copilot Function
+    # -----------------------------
     def run_ai_copilot(question, df):
         sample_data = df.sample(min(30, len(df))).to_dict(orient="records")
-
+    
         prompt = f"""
-You are an expert AI procurement auditor for GPPA.
-
-Analyze the procurement dataset and answer questions about:
-- Compliance risks
-- High-risk procurements
-- Audit priorities
-- Anomalies
-- Recommendations for GPPA directors
-
-Dataset sample:
-{sample_data}
-
-Dataset summary:
-Total records: {len(df)}
-High risk cases: {(df["AI Risk Category"] == "High").sum() if "AI Risk Category" in df.columns else 0}
-Average risk score: {df["AI Risk Score"].mean() if "AI Risk Score" in df.columns else 0:.2f}
-Average compliance score: {df["Compliance Score"].mean() if "Compliance Score" in df.columns else 0:.2f}
-
-User question:
-{question}
-
-Answer clearly like a professional audit analyst.
-Keep the answer concise, executive-friendly, and no longer than 8 bullet points unless the user asks for details.
-"""
-
+    You are an expert AI procurement auditor for GPPA.
+    
+    Analyze the procurement dataset and answer questions about:
+    - Compliance risks
+    - High-risk procurements
+    - Audit priorities
+    - Anomalies
+    - Recommendations for GPPA directors
+    
+    Dataset sample:
+    {sample_data}
+    
+    Dataset summary:
+    Total records: {len(df)}
+    High risk cases: {(df["AI Risk Category"] == "High").sum() if "AI Risk Category" in df.columns else 0}
+    Average risk score: {df["AI Risk Score"].mean() if "AI Risk Score" in df.columns else 0:.2f}
+    Average compliance score: {df["Compliance Score"].mean() if "Compliance Score" in df.columns else 0:.2f}
+    
+    User question:
+    {question}
+    
+    Answer clearly like a professional audit analyst.
+    Keep the answer concise, executive-friendly, and no longer than 8 bullet points unless the user asks for details.
+    """
+    
         if gemini_model is None:
-    return "⚠️ AI is disabled (missing API key)."
-
-try:
-    response = gemini_model.generate_content(prompt)
-    return response.text
-except Exception as e:
-    return f"⚠️ AI error: {e}"
-
+            return "⚠️ AI is disabled (missing API key)."
+    
+        try:
+            response = gemini_model.generate_content(prompt)
+            return response.text
+        except Exception as e:
+            return f"⚠️ AI error: {e}"
+    
+    
+    # -----------------------------
+    # Chat Input
+    # -----------------------------
     user_question = st.chat_input(
         "Ask the AI copilot about compliance, risk, anomalies, or audit priorities"
     )
-
+    
     if user_question:
         st.session_state.copilot_messages.append({
             "role": "user",
             "content": user_question
         })
-
+    
         with st.chat_message("user"):
             st.markdown(user_question)
-
+    
         with st.chat_message("assistant"):
             with st.spinner("Analyzing procurement data..."):
-                try:
-                    if gemini_model is None:
-                        answer = "Gemini API key is missing. AI Copilot is disabled."
-                        st.warning(answer)
-                    else:
-                        answer = run_ai_copilot(user_question, display_df)
-                        st.markdown(answer)
-                except Exception as e:
-                    answer = f"Gemini error: {e}"
-                    st.error(answer)
-
+                answer = run_ai_copilot(user_question, display_df)
+                st.markdown(answer)
+    
         st.session_state.copilot_messages.append({
             "role": "assistant",
             "content": answer
         })
-
+    
+    
+    # -----------------------------
+    # Auto Charts
+    # -----------------------------
     if user_question:
         q = user_question.lower()
-
+    
         if "risk distribution" in q or "pie chart" in q:
             chart_df = display_df["AI Risk Category"].value_counts().reset_index()
             chart_df.columns = ["Risk Category", "Count"]
-
+    
             fig = px.pie(
                 chart_df,
                 names="Risk Category",
@@ -880,7 +887,7 @@ except Exception as e:
                 hole=0.45
             )
             st.plotly_chart(fig, use_container_width=True)
-
+    
         elif "institution" in q and "risk" in q:
             chart_df = (
                 display_df.groupby("institution")["AI Risk Score"]
@@ -888,7 +895,7 @@ except Exception as e:
                 .reset_index()
                 .sort_values("AI Risk Score", ascending=False)
             )
-
+    
             fig = px.bar(
                 chart_df,
                 x="AI Risk Score",
