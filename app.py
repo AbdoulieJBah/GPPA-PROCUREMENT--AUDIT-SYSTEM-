@@ -301,104 +301,106 @@ def risk_category(score):
 
 df = df.loc[:, ~df.columns.duplicated()]
 
- if "procurement_category" not in df.columns:
-     df["procurement_category"] = "goods"
+if "procurement_category" not in df.columns:
+    df["procurement_category"] = "goods"
 
- required_columns = [
-        "institution",
-        "procurement_category",
-        "procurement_method",
-        "amount",
-        "number_of_quotes",
-        "tender_days",
-        "gppa_approval",
-        "supplier_registered",
-        "monthly_report_submitted",
-        "variation_percentage",
-    ]
+required_columns = [
+    "institution",
+    "procurement_category",
+    "procurement_method",
+    "amount",
+    "number_of_quotes",
+    "tender_days",
+    "gppa_approval",
+    "supplier_registered",
+    "monthly_report_submitted",
+    "variation_percentage",
+]
 
-    missing_columns = [c for c in required_columns if c not in df.columns]
+missing_columns = [c for c in required_columns if c not in df.columns]
 
-    if missing_columns:
-        st.error(f"Missing required columns: {', '.join(missing_columns)}")
-        st.stop()
+if missing_columns:
+    st.error(f"Missing required columns: {', '.join(missing_columns)}")
+    st.stop()
 
-    results = []
+results = []
 
-    for _, row in df.iterrows():
-        compliance_score, compliance_risk_score, flags = check_compliance(row)
-        risk_score, risk_reasons = ai_risk_score(row, compliance_risk_score)
+for _, row in df.iterrows():
+    compliance_score, compliance_risk_score, flags = check_compliance(row)
+    risk_score, risk_reasons = ai_risk_score(row, compliance_risk_score)
 
-        results.append({
-            "Compliance Score": compliance_score,
-            "AI Risk Score": risk_score,
-            "AI Risk Category": risk_category(risk_score),
-            "Compliance Flags": "; ".join(flags) if flags else "Compliant",
-            "Risk Reasons": "; ".join(risk_reasons) if risk_reasons else "Low risk"
-        })
+    results.append({
+        "Compliance Score": compliance_score,
+        "AI Risk Score": risk_score,
+        "AI Risk Category": risk_category(risk_score),
+        "Compliance Flags": "; ".join(flags) if flags else "Compliant",
+        "Risk Reasons": "; ".join(risk_reasons) if risk_reasons else "Low risk"
+    })
 
-    def generate_pdf_report(df):
-        buffer = io.BytesIO()
-        c = canvas.Canvas(buffer, pagesize=A4)
-    
-        width, height = A4
-        y = height - 50
-    
-        c.setFont("Helvetica-Bold", 16)
-        c.drawString(50, y, "GPPA Procurement Risk & Compliance Report")
-    
-        y -= 35
-        c.setFont("Helvetica", 10)
-        c.drawString(50, y, f"Total Procurements: {len(df)}")
-    
-        y -= 20
-        high_risk = (df["AI Risk Category"] == "High").sum()
-        c.drawString(50, y, f"High Risk Cases: {high_risk}")
-    
-        y -= 20
-        if "Anomaly Flag" in df.columns:
-            anomalies = (df["Anomaly Flag"] == "Anomaly").sum()
-        else:
-            anomalies = 0
-        c.drawString(50, y, f"Anomalies Detected: {anomalies}")
-    
-        y -= 35
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(50, y, "Top 5 Riskiest Procurements")
-    
-        y -= 25
-        c.setFont("Helvetica", 8)
-    
-        top5 = df.sort_values("AI Risk Score", ascending=False).head(5)
-    
-        for _, row in top5.iterrows():
-            text = (
-                f"{row.get('institution', '')} | "
-                f"{row.get('procurement_category', '')} | "
-                f"Risk Score: {row.get('AI Risk Score', '')} | "
-                f"Risk: {row.get('AI Risk Category', '')}"
-            )
-    
-            c.drawString(50, y, text[:110])
-            y -= 18
-    
-            if y < 80:
-                c.showPage()
-                y = height - 50
-                c.setFont("Helvetica", 8)
-    
-        c.save()
-        buffer.seek(0)
-        return buffer
 
-    final_df = pd.concat([df.reset_index(drop=True), pd.DataFrame(results)], axis=1)
-    final_df = final_df.loc[:, ~final_df.columns.duplicated()]
+def generate_pdf_report(df):
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
 
-    tab1, tab2, tab3 = st.tabs([
-        "📋 Executive Compliance Dashboard",
-        "🤖 ML Training & Testing",
-        "🔮 Predict New Procurement"
-    ])
+    width, height = A4
+    y = height - 50
+
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(50, y, "GPPA Procurement Risk & Compliance Report")
+
+    y -= 35
+    c.setFont("Helvetica", 10)
+    c.drawString(50, y, f"Total Procurements: {len(df)}")
+
+    y -= 20
+    high_risk = (df["AI Risk Category"] == "High").sum()
+    c.drawString(50, y, f"High Risk Cases: {high_risk}")
+
+    y -= 20
+    if "Anomaly Flag" in df.columns:
+        anomalies = (df["Anomaly Flag"] == "Anomaly").sum()
+    else:
+        anomalies = 0
+    c.drawString(50, y, f"Anomalies Detected: {anomalies}")
+
+    y -= 35
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(50, y, "Top 5 Riskiest Procurements")
+
+    y -= 25
+    c.setFont("Helvetica", 8)
+
+    top5 = df.sort_values("AI Risk Score", ascending=False).head(5)
+
+    for _, row in top5.iterrows():
+        text = (
+            f"{row.get('institution', '')} | "
+            f"{row.get('procurement_category', '')} | "
+            f"Risk Score: {row.get('AI Risk Score', '')} | "
+            f"Risk: {row.get('AI Risk Category', '')}"
+        )
+
+        c.drawString(50, y, text[:110])
+        y -= 18
+
+        if y < 80:
+            c.showPage()
+            y = height - 50
+            c.setFont("Helvetica", 8)
+
+    c.save()
+    buffer.seek(0)
+    return buffer
+
+
+final_df = pd.concat([df.reset_index(drop=True), pd.DataFrame(results)], axis=1)
+final_df = final_df.loc[:, ~final_df.columns.duplicated()]
+
+tab1, tab2, tab3 = st.tabs([
+    "📋 Executive Compliance Dashboard",
+    "🤖 ML Training & Testing",
+    "🔮 Predict New Procurement"
+])
 
 
 
