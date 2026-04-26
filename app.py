@@ -58,12 +58,11 @@ if st.session_state.page == "landing":
     st.markdown("""
     ### 🏛️ Designed For
     
-    - Government Procurement Authorities  
-    - Anti-Corruption Agencies  
-    - Internal Audit Units  
-    - World Bank / Donor-Funded Projects  
-    - Compliance & Risk Teams  
-    
+    ✔ Government Procurement Authorities  
+    ✔ Anti-Corruption Agencies  
+    ✔ Internal Audit Units  
+    ✔ Donor-Funded Projects  
+    ✔ Compliance & Risk Teams  
     """)
     .hero-title {
         font-size: 48px;
