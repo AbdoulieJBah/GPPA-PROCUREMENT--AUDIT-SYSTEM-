@@ -17,9 +17,9 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
 import plotly.express as px
-from openai import OpenAI
+import google.generativeai as genai
 
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
 
 st.set_page_config(
@@ -599,7 +599,7 @@ if uploaded_file:
 
         
 
-        st.subheader("🎯 Explain Selected Procurement")
+       st.subheader("🎯 Explain Selected Procurement")
 
         if len(display_df) > 0:
             selected_index = st.selectbox(
@@ -617,25 +617,24 @@ if uploaded_file:
         You are an expert GPPA procurement auditor.
         
         Explain this procurement record in simple professional language:
+        
         {selected_row}
         
         Explain:
         1. Why it is risky or compliant
-        2. Which compliance issues matter most
-        3. What action an auditor should take next
+        2. The most important compliance issues
+        3. What an auditor should do next
         4. A short recommendation for a GPPA director
         """
         
                 with st.spinner("Generating explanation..."):
-                    response = client.responses.create(
-                        model="gpt-5.5",
-                        input=prompt
-                    )
-        
-                st.markdown(response.output_text)
+                    try:
+                        response = gemini_model.generate_content(prompt)
+                        st.markdown(response.text)
+                    except Exception as e:
+                        st.warning("AI explanation is temporarily unavailable. Please check your Gemini API key or quota.")
         else:
             st.info("No procurement records available to explain.")
-
 
         st.subheader("🤖 GPPA AI Audit Copilot")
 
@@ -646,55 +645,42 @@ if uploaded_file:
             with st.chat_message(msg["role"]):
                 st.markdown(msg["content"])
         
+        
         def run_ai_copilot(question, df):
             sample_data = df.sample(min(30, len(df))).to_dict(orient="records")
         
-            context = f"""
+            prompt = f"""
         You are an expert AI procurement auditor for GPPA.
         
-        You can answer questions about:
-        - Procurement compliance
-        - Risk levels
+        Analyze the procurement dataset and answer questions about:
+        - Compliance risks
         - High-risk procurements
+        - Audit priorities
         - Anomalies
-        - Audit recommendations
-        - GPPA-style red flags
-        - Dataset insights
+        - Recommendations for GPPA directors
         
         Dataset sample:
         {sample_data}
         
-        Summary:
+        Dataset summary:
         Total records: {len(df)}
         High risk cases: {(df["AI Risk Category"] == "High").sum() if "AI Risk Category" in df.columns else 0}
         Average risk score: {df["AI Risk Score"].mean() if "AI Risk Score" in df.columns else 0:.2f}
         Average compliance score: {df["Compliance Score"].mean() if "Compliance Score" in df.columns else 0:.2f}
+        
+        User question:
+        {question}
+        
+        Answer clearly like a professional audit analyst.
         """
         
-            response = client.responses.create(
-                model="gpt-4o-mini",
-                input=[
-                    {
-                        "role": "system",
-                        "content": context
-                    },
-                    *[
-                        {
-                            "role": m["role"],
-                            "content": m["content"]
-                        }
-                        for m in st.session_state.copilot_messages[-6:]
-                    ],
-                    {
-                        "role": "user",
-                        "content": question
-                    }
-                ],
-            )
+            response = gemini_model.generate_content(prompt)
+            return response.text
         
-            return response.output_text
         
-        user_question = st.chat_input("Ask the AI copilot about compliance, risk, anomalies, or audit priorities")
+        user_question = st.chat_input(
+            "Ask the AI copilot about compliance, risk, anomalies, or audit priorities"
+        )
         
         if user_question:
             st.session_state.copilot_messages.append({
@@ -707,8 +693,12 @@ if uploaded_file:
         
             with st.chat_message("assistant"):
                 with st.spinner("Analyzing procurement data..."):
-                    answer = run_ai_copilot(user_question, display_df)
-                    st.markdown(answer)
+                    try:
+                        answer = run_ai_copilot(user_question, display_df)
+                        st.markdown(answer)
+                    except Exception as e:
+                        answer = "AI Copilot is temporarily unavailable. Please check your Gemini API key or quota."
+                        st.warning(answer)
         
             st.session_state.copilot_messages.append({
                 "role": "assistant",
@@ -751,7 +741,11 @@ if uploaded_file:
         st.subheader("📄 AI-Written Executive Report")
 
         if st.button("Generate AI Executive Report"):
-            report_sample = display_df.sort_values("AI Risk Score", ascending=False).head(20).to_dict(orient="records")
+            report_sample = (
+                display_df.sort_values("AI Risk Score", ascending=False)
+                .head(20)
+                .to_dict(orient="records")
+            )
         
             report_prompt = f"""
         You are an expert public procurement audit analyst.
@@ -770,13 +764,21 @@ if uploaded_file:
         """
         
             with st.spinner("Writing executive report..."):
-                report_response = client.responses.create(
-                    model="gpt-5.5",
-                    input=report_prompt
-                )
+                try:
+                    report_response = gemini_model.generate_content(report_prompt)
+                    report_text = report_response.text
         
-            st.markdown(report_response.output_text)
+                    st.markdown(report_text)
         
+                    st.download_button(
+                        "Download AI Executive Report",
+                        report_text,
+                        "gppa_ai_executive_report.txt",
+                        "text/plain"
+                    )
+                except Exception as e:
+                    st.warning("AI report generation is temporarily unavailable. Please check your Gemini API key or quota.")
+                
             st.download_button(
                 "Download AI Executive Report",
                 report_response.output_text,
