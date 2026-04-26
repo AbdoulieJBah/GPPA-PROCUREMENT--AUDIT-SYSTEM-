@@ -63,6 +63,70 @@ st.write(
     "SMOTE class balancing, model comparison, prediction confidence, and executive audit reporting."
 )
 
+# -----------------------------
+# 🚀 SIDEBAR (PROFESSIONAL UI)
+# -----------------------------
+st.sidebar.markdown("## 👤 About This Project")
+
+st.sidebar.markdown("""
+<div style="padding:12px; border-radius:10px; background-color:#0f172a; border:1px solid #1e293b;">
+
+<b style="font-size:15px;">AI-Powered Procurement Risk System</b><br>
+<span style="color:#94a3b8;">Built by Abdoulie J Bah</span>
+
+<hr style="margin:10px 0;">
+
+🚀 <b>Core Features</b><br>
+• AI Copilot for audit insights<br>
+• Explainable procurement risk<br>
+• ML + anomaly detection<br>
+• Executive dashboards<br>
+
+<hr style="margin:10px 0;">
+
+💡 <b>Use Case</b><br>
+Public procurement auditing, compliance monitoring, and fraud risk detection
+
+</div>
+""", unsafe_allow_html=True)
+
+# -----------------------------
+# 🔗 LINKS (IMPORTANT FOR RECRUITERS)
+# -----------------------------
+st.sidebar.markdown("### 🔗 Connect")
+
+st.sidebar.markdown("""
+<a href="https://www.linkedin.com/in/abdoulie-j-bah-b71263244" target="_blank">
+    <button style="width:100%; padding:8px; margin-bottom:6px; border-radius:8px; background:#0ea5e9; color:white; border:none; font-weight:600;">
+        🔗 LinkedIn
+    </button>
+</a>
+
+<a href="https://github.com/AbdoulieJBah/ai-business-intelligence-dashboard" target="_blank">
+    <button style="width:100%; padding:8px; margin-bottom:6px; border-radius:8px; background:#1f2937; color:white; border:none; font-weight:600;">
+        💻 GitHub
+    </button>
+</a>
+
+<a href="mailto:21722285bah@gmail.com">
+    <button style="width:100%; padding:8px; border-radius:8px; background:#2563eb; color:white; border:none; font-weight:600;">
+        📧 Contact Me
+    </button>
+</a>
+""", unsafe_allow_html=True)
+
+# -----------------------------
+# 📊 QUICK STATUS
+# -----------------------------
+st.sidebar.markdown("### 📊 System Status")
+
+if gemini_model is not None:
+    st.sidebar.success("🤖 AI Copilot: Active")
+else:
+    st.sidebar.warning("⚠️ AI Copilot: Disabled")
+
+st.sidebar.success("📊 Dashboard: Active")
+st.sidebar.success("🧠 ML Engine: Ready")
 
 DB_PATH = "gppa_procurement_data.db"
 
@@ -85,10 +149,15 @@ def init_database():
 
 def save_uploaded_dataset(df, upload_name):
     conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
 
+    # 🔥 Clear old datasets (keep only latest)
+    cursor.execute("DELETE FROM uploaded_datasets")
+
+    # Convert dataframe to JSON
     data_json = df.to_json(orient="records")
 
-    cursor = conn.cursor()
+    # Insert new dataset
     cursor.execute(
         """
         INSERT INTO uploaded_datasets (upload_name, upload_date, data)
@@ -145,11 +214,12 @@ if uploaded_file is not None:
             st.stop()
 
         save_uploaded_dataset(df, uploaded_file.name)
-        st.success("✅ Uploaded dataset saved permanently to database")
+        st.success("✅ Uploaded dataset saved successfully")
 
     except pd.errors.EmptyDataError:
         st.warning("⚠️ Uploaded CSV file is empty. Please upload a valid CSV file.")
         st.stop()
+
 else:
     saved_df, saved_name, saved_date = load_latest_dataset()
 
@@ -163,6 +233,9 @@ else:
         except FileNotFoundError:
             st.warning("⚠️ No dataset available. Please upload a file.")
             st.stop()
+
+# ✅ Cache loaded data
+df = load_data_cached(df)
 
 
 
@@ -704,9 +777,14 @@ Provide:
                     if gemini_model is None:
                         st.warning("Gemini API key is missing. AI explanation is disabled.")
                     else:
-                        response = gemini_model.generate_content(prompt)
-                        st.markdown("### 🧠 AI Audit Explanation")
-                        st.markdown(response.text)
+                        if gemini_model is None:
+    st.warning("AI features are disabled (missing API key).")
+else:
+    try:
+        response = gemini_model.generate_content(prompt)
+        st.markdown(response.text)
+    except Exception as e:
+        st.error(f"⚠️ AI error: {e}")
                 except Exception as e:
                     st.error(f"AI explanation failed: {e}")
 
@@ -751,8 +829,14 @@ Answer clearly like a professional audit analyst.
 Keep the answer concise, executive-friendly, and no longer than 8 bullet points unless the user asks for details.
 """
 
-        response = gemini_model.generate_content(prompt)
-        return response.text
+        if gemini_model is None:
+    return "⚠️ AI is disabled (missing API key)."
+
+try:
+    response = gemini_model.generate_content(prompt)
+    return response.text
+except Exception as e:
+    return f"⚠️ AI error: {e}"
 
     user_question = st.chat_input(
         "Ask the AI copilot about compliance, risk, anomalies, or audit priorities"
@@ -848,8 +932,15 @@ Data sample:
                 if gemini_model is None:
                     st.warning("Gemini API key is missing. AI report generation is disabled.")
                 else:
-                    report_response = gemini_model.generate_content(report_prompt)
-                    report_text = report_response.text
+                    if gemini_model is None:
+    st.warning("AI report generation is disabled.")
+else:
+    try:
+        report_response = gemini_model.generate_content(report_prompt)
+        report_text = report_response.text
+        st.markdown(report_text)
+    except Exception as e:
+        st.error(f"⚠️ AI error: {e}")
 
                     st.markdown(report_text)
 
