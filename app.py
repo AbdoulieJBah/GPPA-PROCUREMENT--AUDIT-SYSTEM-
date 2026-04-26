@@ -88,6 +88,13 @@ if st.session_state.page == "landing":
         margin-top: 10px;
     }
     
+    /* Mobile Fix */
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 28px;
+        }
+    }
+    
     .feature-card {
         padding: 20px;
         border-radius: 15px;
@@ -108,36 +115,26 @@ if st.session_state.page == "landing":
         color: #d1d5db;
     }
     
-    /* Mobile Fix */
-    @media (max-width: 768px) {
-        .hero-title {
-            font-size: 28px;
-        }
-    }
-    
     </style>
     """, unsafe_allow_html=True)
     
     
     # ---------------- HERO SECTION ----------------
-    st.markdown("""
-    <div class="hero">
+    st.markdown("""<div class="hero">
     
-        <div class="hero-badge">
-            🚀 AI-Powered GovTech Platform
-        </div>
+    <div class="hero-badge">🚀 AI-Powered GovTech Platform</div>
     
-        <div class="hero-title">
-            AI-Powered Procurement Risk System
-        </div>
+    <div class="hero-title">
+    AI-Powered Procurement Risk System
+    </div>
     
-        <div class="hero-subtitle">
-            Detect compliance violations, high-risk procurements, audit priorities, and anomalies using AI.
-        </div>
+    <div class="hero-subtitle">
+    Detect compliance violations, high-risk procurements, audit priorities, and anomalies using AI.
+    </div>
     
-        <div class="hero-desc">
-            Built for public procurement authorities, auditors, compliance teams, and data-driven governance.
-        </div>
+    <div class="hero-desc">
+    Built for public procurement authorities, auditors, compliance teams, and data-driven governance.
+    </div>
     
     </div>
     """, unsafe_allow_html=True)
@@ -155,34 +152,28 @@ if st.session_state.page == "landing":
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.markdown("""
-        <div class="feature-card">
-            <div class="feature-title">🤖 AI Audit Copilot</div>
-            <div class="feature-text">
-                Ask questions about procurement risks, compliance issues, institutions, and audit priorities.
-            </div>
+        st.markdown("""<div class="feature-card">
+        <div class="feature-title">🤖 AI Audit Copilot</div>
+        <div class="feature-text">
+        Ask questions about procurement risks, compliance issues, institutions, and audit priorities.
         </div>
-        """, unsafe_allow_html=True)
+        </div>""", unsafe_allow_html=True)
     
     with col2:
-        st.markdown("""
-        <div class="feature-card">
-            <div class="feature-title">📊 Executive Dashboard</div>
-            <div class="feature-text">
-                Visualize risk exposure, compliance scores, institutions, and procurement categories.
-            </div>
+        st.markdown("""<div class="feature-card">
+        <div class="feature-title">📊 Executive Dashboard</div>
+        <div class="feature-text">
+        Visualize risk exposure, compliance scores, institutions, and procurement categories.
         </div>
-        """, unsafe_allow_html=True)
+        </div>""", unsafe_allow_html=True)
     
     with col3:
-        st.markdown("""
-        <div class="feature-card">
-            <div class="feature-title">🧠 ML Risk Engine</div>
-            <div class="feature-text">
-                Uses machine learning, SMOTE balancing, anomaly detection, and prediction confidence.
-            </div>
+        st.markdown("""<div class="feature-card">
+        <div class="feature-title">🧠 ML Risk Engine</div>
+        <div class="feature-text">
+        Uses machine learning, SMOTE balancing, anomaly detection, and prediction confidence.
         </div>
-        """, unsafe_allow_html=True)
+        </div>""", unsafe_allow_html=True)
     st.markdown("""
     ### 🏛️ Designed For
     
