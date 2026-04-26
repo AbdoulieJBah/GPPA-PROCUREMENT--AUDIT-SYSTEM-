@@ -19,9 +19,13 @@ from reportlab.lib.units import inch
 import plotly.express as px
 import google.generativeai as genai
 
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-gemini_model = genai.GenerativeModel("gemini-pro")
+gemini_model = None
 
+if "GEMINI_API_KEY" in st.secrets:
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    gemini_model = genai.GenerativeModel("gemini-pro")
+else:
+    st.warning("Gemini API key is missing. AI Copilot features are disabled.")
 st.set_page_config(
     page_title="GPPA Advanced AI Procurement Risk System",
     layout="wide"
