@@ -521,7 +521,7 @@ with tab1:
     st.divider()
 
     if total > 0:
-        st.markdown("## 📊 Power BI-Style Risk Dashboard")
+        st.markdown("## 📊 Risk Dashboard")
 
         risk_colors = {
             "High": "#d62728",
