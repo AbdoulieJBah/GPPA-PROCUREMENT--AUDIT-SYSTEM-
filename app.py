@@ -29,7 +29,6 @@ if "GEMINI_API_KEY" in st.secrets:
 else:
     st.warning("Gemini API key is missing. AI Copilot features are disabled.")
 
-init_database()
 
 st.set_page_config(
     page_title="GPPA Advanced AI Procurement Risk System",
@@ -151,6 +150,8 @@ def load_latest_dataset():
 
     df = pd.read_json(result.loc[0, "data"])
     return df, result.loc[0, "upload_name"], result.loc[0, "upload_date"]
+
+init_database()
 
 def yes_no(value):
     return str(value).strip().lower() in ["yes", "true", "1", "y"]
