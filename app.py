@@ -403,11 +403,8 @@ tab1, tab2, tab3 = st.tabs([
 ])
 
 
-
-
-    
-    with tab1:
-        st.markdown("## 📊 GPPA Executive Risk Intelligence Dashboard")
+with tab1:
+     st.markdown("## 📊 GPPA Executive Risk Intelligence Dashboard")
         st.write(
             "Designed for GPPA directors, auditors, and decision-makers. "
             "This section focuses on compliance status, risk exposure, audit priorities, and downloadable reports."
@@ -964,8 +961,8 @@ tab1, tab2, tab3 = st.tabs([
             mime="application/pdf"
         )
 
-    with tab2:
-        st.subheader("🤖 Advanced Machine Learning Training & Testing")
+with tab2:
+    st.subheader("🤖 Advanced Machine Learning Training & Testing")
     
         ml_features = [
             "procurement_category",
@@ -1265,9 +1262,9 @@ tab1, tab2, tab3 = st.tabs([
                 "text/csv"
             )
 
-    with tab3:
-        st.subheader("🔮 Predict New Procurement Risk")
-        st.write("Use this form to estimate risk for a new procurement case.")
+with tab3:
+    st.subheader("🔮 Predict New Procurement Risk")
+    st.write("Use this form to estimate risk for a new procurement case.")
 
         with st.form("new_procurement_form"):
             col1, col2 = st.columns(2)
@@ -1328,6 +1325,10 @@ tab1, tab2, tab3 = st.tabs([
             st.write("Compliance Flags:", "; ".join(flags) if flags else "Compliant")
             st.write("Risk Reasons:", "; ".join(reasons) if reasons else "Low risk")
 
+
+
+    
+   
 else:
     st.info("Upload a CSV or Excel file to begin.")
 
