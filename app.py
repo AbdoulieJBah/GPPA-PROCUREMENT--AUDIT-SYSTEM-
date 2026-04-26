@@ -23,7 +23,7 @@ gemini_model = None
 
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+    gemini_model = genai.GenerativeModel("gemini-2.5-flash")
 else:
     st.warning("Gemini API key is missing. AI Copilot features are disabled.")
 st.set_page_config(
