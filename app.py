@@ -219,30 +219,24 @@ if st.session_state.page == "landing":
     
     
     # ---------------- FEATURE CARDS ----------------
-    st.markdown("""<div class="features-grid">
+    st.markdown("### 🚀 Core Features")
     
-    <div class="feature-card">
-    <div class="feature-title">🤖 AI Audit Copilot</div>
-    <div class="feature-text">
-    Ask questions about procurement risks, compliance issues, institutions, and audit priorities.
-    </div>
-    </div>
+    f1, f2, f3 = st.columns(3)
     
-    <div class="feature-card">
-    <div class="feature-title">📊 Executive Dashboard</div>
-    <div class="feature-text">
-    Visualize risk exposure, compliance scores, institutions, and procurement categories.
-    </div>
-    </div>
+    with f1:
+        with st.container(border=True):
+            st.markdown("### 🤖 AI Audit Copilot")
+            st.write("Ask questions about procurement risks, compliance issues, institutions, and audit priorities.")
     
-    <div class="feature-card">
-    <div class="feature-title">🧠 ML Risk Engine</div>
-    <div class="feature-text">
-    Uses machine learning, SMOTE balancing, anomaly detection, and prediction confidence.
-    </div>
-    </div>
+    with f2:
+        with st.container(border=True):
+            st.markdown("### 📊 Executive Dashboard")
+            st.write("Visualize risk exposure, compliance scores, institutions, and procurement categories.")
     
-    </div>""", unsafe_allow_html=True)
+    with f3:
+        with st.container(border=True):
+            st.markdown("### 🧠 ML Risk Engine")
+            st.write("Uses machine learning, SMOTE balancing, anomaly detection, and prediction confidence.")
     st.markdown("""
     ### 🏛️ Designed For
     
