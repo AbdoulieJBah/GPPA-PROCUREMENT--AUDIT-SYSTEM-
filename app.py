@@ -186,7 +186,7 @@ if st.session_state.page == "landing":
     
     # ---------------- HERO ----------------
     st.markdown("""<div class="hero">
-    <div class="hero-badge">AI-Powered GovTech Platform</div>
+    <div class="hero-badge"> AI-Powered GovTech Platform</div>
     <div class="hero-title">AI-Powered Procurement Risk System</div>
     <div class="hero-subtitle">Detect compliance violations, high-risk procurements, audit priorities, and anomalies using AI.</div>
     <div class="hero-desc">Built for procurement authorities, auditors, compliance teams, and data-driven governance.</div>
