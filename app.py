@@ -219,7 +219,7 @@ if st.session_state.page == "landing":
     
     
     # ---------------- FEATURE CARDS ----------------
-    st.markdown("### 🚀 Core Features")
+    st.markdown("### Core Features")
     
     f1, f2, f3 = st.columns(3)
     
